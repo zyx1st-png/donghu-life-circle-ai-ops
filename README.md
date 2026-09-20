@@ -93,6 +93,26 @@ python3 tools/shift_demo_dates.py --to 2026-10-11 --write
 工具只服务于演示稳定性，不是线上运行时。
 推荐由 WorkBuddy 里的 Agent 完成；`tools/` 的作用是让"三次彩排结果一致"这件事可被验证。
 
+## 规则与 Agent 的分工
+
+```text
+确定性规则  →  eligibility 与硬排除，产出候选集合
+Agent       →  在候选集合内做语义判断（服务能力核对、文案）
+运营        →  最终确认后才触达
+```
+
+因此 `--explain` 的输出：对非服务类内容是**最终标准答案**；
+对服务类内容（`commercial_level = service`）是**候选基线**——
+Agent 做完能力级核对后名单可以更窄，但不应更宽。
+
+推荐结果分三层，不要混：
+
+```text
+ELIGIBLE     内容与居民适配
+HOLD         适配，但今日不应主动触达（改日可发）
+TARGET_TODAY = ELIGIBLE − HOLD    ← Push Plan 的当天执行名单
+```
+
 ## 数据纪律
 
 - 真实居民数据不得提交到本仓库。
@@ -121,11 +141,13 @@ T0 MCP 能力验证（docs/t0-mcp-spike.md，A 组全 PASS）
 
 | 改动 | 位置 | 原因 |
 |---|---|---|
-| Push Plans 增加 `no_send_residents` / `no_send_reason` 两列 | `docs/sheet-setup.md` | PRD §22 要求输出 NO_SEND，但没有字段存放，最有说服力的判断回到表里就看不见了 |
+| Push Plans 增加 NO_SEND / HOLD 共 4 列 | `docs/sheet-setup.md` | PRD §22 要求输出 NO_SEND 但没有字段存放；HOLD 被排出当天名单后，"内容其实适合他"这个判断也需要落到表里 |
 | `Contents.region` 由单行文本改为单选 | `docs/sheet-setup.md` | 自由文本已经产生「东湖周边 / 东湖及周边」两种写法 |
 | 冻结人群与区域词表 | `config/vocabulary.md` | PRD §7 只冻结了主题标签，其余多选字段同样会漂 |
 | 写出完整推荐判定规则 | `config/recommendation-rules.md` | PRD 定义了展示什么，没有定义凭什么，导致同一条内容每次跑结果不同 |
 | 重算全部 Push Plans 名单 | `demo/seed-data/Push_Plans.csv` | 原名单无法由任何成文规则复现，彩排时表里的 Before 和 Agent 实时输出对不上 |
+| `active` 内容必须有 `expire_at` | `config/recommendation-rules.md` | 留空曾等同于"永不过期"，活动结束几周后仍会被推，且完全无声 |
+| Need 判定看待办事项而非句式 | `prompts/ops-agent.md` | 「有没有靠谱的保洁？」是疑问句但确是真实需求，按句式切会系统性漏掉商业需求 |
 
 ## 商业模式背景
 
