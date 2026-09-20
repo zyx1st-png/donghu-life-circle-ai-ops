@@ -6,8 +6,10 @@
 2. 无回复不等于负反馈。
 3. 明确负反馈优先于 AI 推断。
 4. 服务推荐优先由明确 Need 或 Service Intent 触发，且必须做能力级核对。
-5. AI 只生成 Draft，运营确认后再执行居民触达。
-6. 真实居民敏感数据不得提交到 GitHub。
+5. 未满足的需求包含 `unable_to_resolve`——当前没供给不等于这件事不用办了。
+6. Need 的判定看"有没有具体待办事项"，不看句式。
+7. AI 只生成 Draft，运营确认后再执行居民触达。
+8. 真实居民敏感数据不得提交到 GitHub。
 
 ## 数据纪律
 
@@ -20,6 +22,21 @@
 ## 判定规则
 
 推荐的完整判定顺序见 `config/recommendation-rules.md`，那份文件是唯一依据。
+
+三层语义必须分清：
+
+```text
+ELIGIBLE     内容与居民适配
+HOLD         适配，但今日不应主动触达
+TARGET_TODAY = ELIGIBLE − HOLD    ← Push Plan.target_residents 只能由它生成
+```
+
+内容时效契约（Prompt、规则引擎、校验脚本三处共同强制）：
+
+```text
+status = active  →  expire_at 必须存在且晚于当前时间
+时效判断不了     →  保留 status = draft
+```
 
 ## Demo 剧情不变量
 
@@ -36,7 +53,9 @@
 | C001 早市 | `R009 陈叔` 仍在 SEND 名单里 —— NO_SEND 是按主题，不是按人 |
 | Quick Capture | `R014 王阿姨` 的上门助浴需求在当前 Services 中无匹配（S006 陪诊不算） |
 | 重名消歧 | 保留两位张姐，`identify_note` 不同 |
-| HOLD | `R018 小刘` 今日不主动触达 |
+| HOLD | `R018 小刘` 在 C011 上判为 HOLD：内容适配但今日暂停 |
+| HOLD | HOLD 居民不得出现在任何 `target_residents` 里，但保留在 `hold_residents` |
+| 需求闭环 | `unable_to_resolve` 的 Need 仍算未满足；东湖引入新服务后能重新匹配回原居民 |
 | 时效 | 至少 1 条 `expired` 内容 |
 | 招商线索 | 至少 2 条 `unable_to_resolve` 的 Need |
 

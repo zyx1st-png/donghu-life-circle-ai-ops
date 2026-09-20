@@ -140,21 +140,30 @@
 | push_id | 单行文本 | 是 | `P001`– |
 | push_date | 日期 | 是 | |
 | content_id | 单行文本 | 是 | |
-| target_residents | 多行文本 | 否 | `R003 张姐；R021 李阿姨`，全角分号 |
+| target_residents | 多行文本 | 否 | **当天执行名单** = 适配 − HOLD。`R003 张姐；R021 李阿姨`，全角分号 |
 | target_segment | 单行文本 | 否 | 人群描述 |
 | recommend_reason | 多行文本 | 是 | |
 | message_text | 多行文本 | 是 | |
-| no_send_residents | 多行文本 | 否 | 格式同 `target_residents` |
+| no_send_residents | 多行文本 | 否 | 格式同 `target_residents`。主题禁忌等硬排除 |
 | no_send_reason | 多行文本 | 否 | |
+| hold_residents | 多行文本 | 否 | 内容适配、但今日暂停主动触达的居民 |
+| hold_reason | 多行文本 | 否 | |
 | review_status | 单选 | 是 | `draft` / `approved` / `rejected` |
 | send_status | 单选 | 是 | `not_sent` / `sent` / `cancelled` |
 | operator_note | 多行文本 | 否 | |
 
-> **与 PRD 的差异**：新增 `no_send_residents` 和 `no_send_reason` 两列。
-> PRD §22 要求推荐 Agent 必须输出 NO_SEND，但 v0.4.1 的 Push Plans 没有地方存它，
-> 结果是整场演示里最有说服力的那个判断只存在于对话框里，
-> 一切回表格就看不见了。加两列比加一张表便宜得多，
-> 也让「少发错」这件事在 SmartSheet 里可以被直接指着看。
+> **与 PRD 的差异**：新增 4 列，分成两组。
+>
+> `no_send_residents` / `no_send_reason` —— PRD §22 要求推荐 Agent 必须输出 NO_SEND，
+> 但 v0.4.1 的 Push Plans 没有地方存它，结果是整场演示里最有说服力的那个判断
+> 只存在于对话框里，一回表格就看不见了。
+>
+> `hold_residents` / `hold_reason` —— `target_residents` 是当天的执行名单，
+> 必须排除今日 HOLD 的居民，否则会出现"名单里有他、同时又写着今天不要联系他"的矛盾。
+> 但被排除的原因不能丢：HOLD 和 NO_SEND 的后续动作完全不同（HOLD 改日可以再发，
+> NO_SEND 这个主题就不发了），所以分成两组而不是混在一起。
+>
+> 加 4 列比加一张表便宜得多，也让「少发错」在 SmartSheet 里可以被直接指着看。
 
 ---
 
@@ -163,8 +172,9 @@
 1. 先确认 T0 的 B1 结论：CSV 里的半角 `;` 会不会被拆成多选值。
    不会的话先按 B1 记录的方式转换。
 2. 按建表顺序导入 6 个 CSV。
-3. 导入后逐表核对条数：居民 25 / 内容 15 / 互动 20 / 需求 6 / 服务 8 / 推送 5。
+3. 导入后逐表核对条数。
 4. 抽查 3 条多选字段，确认是多个选项而不是一整串文本。
+   条数核对：居民 25 / 内容 15 / 互动 20 / 需求 6 / 服务 8 / 推送 6。
 5. 抽查 `R003`：`recent_interests` 必须为空，`long_term_interests` 只有「社区活动」。
    这条错了，Before/After 整场戏就没了。
 
@@ -176,6 +186,7 @@ MCP 建不了就人工建，不阻塞（PRD §37）：
 |---|---|---|
 | 今日可发内容 | Contents | `status = active` 且 `expire_at` 晚于今天 |
 | 待审推送 | Push Plans | `review_status = draft` |
+| 今日暂停触达 | Push Plans | `hold_residents` 非空 |
 | 未解决需求 | Needs | `status` 为 `new` / `following` |
 | 无供给需求 | Needs | `status = unable_to_resolve` |
 | 近期活跃居民 | Residents | 按 `last_interaction_at` 倒序 |

@@ -16,6 +16,7 @@
 from __future__ import annotations
 
 import argparse
+import copy
 import datetime as dt
 import re
 import sys
@@ -92,6 +93,11 @@ def check_required(ds: Dataset):
             for f in required[table]:
                 if not (row.get(f) or "").strip():
                     err(f"[{table}] {row[key]} 必填字段为空: {f}")
+    # active 内容必须有 expire_at：空值曾等同于"永不过期"，活动结束几周后仍会被推
+    for c in ds.contents:
+        if c["status"] == "active" and not (c["expire_at"] or "").strip():
+            err(f"[Contents] {c['content_id']} status=active 但 expire_at 为空。"
+                f"时效无法判定时应保留 status=draft")
 
 
 def check_vocab(ds: Dataset):
@@ -207,16 +213,19 @@ def check_push_plans(ds: Dataset, today: dt.datetime):
         if result["gate"]:
             err(f"[Push_Plans] {p['push_id']} 的内容 {p['content_id']} {result['gate']}")
             continue
-        want_send = format_targets(result["send"])
-        want_no = format_targets(result["no_send"])
-        if p["target_residents"] != want_send:
-            err(f"[Push_Plans] {p['push_id']} ({p['content_id']}) target_residents 与规则结果不一致\n"
-                f"    表内: {p['target_residents']}\n"
-                f"    规则: {want_send}")
-        if p.get("no_send_residents", "") != want_no:
-            err(f"[Push_Plans] {p['push_id']} ({p['content_id']}) no_send_residents 与规则结果不一致\n"
-                f"    表内: {p.get('no_send_residents', '')}\n"
-                f"    规则: {want_no}")
+        for col, bucket in (("target_residents", "send_today"),
+                            ("no_send_residents", "no_send"),
+                            ("hold_residents", "hold")):
+            want = format_targets(result[bucket])
+            if p.get(col, "") != want:
+                err(f"[Push_Plans] {p['push_id']} ({p['content_id']}) {col} 与规则结果不一致\n"
+                    f"    表内: {p.get(col, '')}\n"
+                    f"    规则: {want}")
+        # target_residents 是当天的执行名单，HOLD 的人绝不能出现在里面
+        held = {d.resident_id for d in result["hold"]}
+        for token in _split(p.get("target_residents", "")):
+            if token.split()[0] in held:
+                err(f"[Push_Plans] {p['push_id']} 的 target_residents 含今日 HOLD 居民: {token}")
 
 
 def check_sheet_setup():
@@ -259,7 +268,6 @@ def check_sheet_setup():
 
 def quick_capture_after(ds: Dataset, today: dt.datetime) -> Dataset:
     """模拟现场 Quick Capture：3栋张姐(R003) 询问小学生周末活动。"""
-    import copy
     after = copy.deepcopy(ds)
     r = after.resident("R003")
     r["recent_interests"] = "亲子活动"
@@ -284,18 +292,18 @@ def check_demo_invariants(ds: Dataset, today: dt.datetime):
 
     # 1. C003 Before：张姐不在名单
     before = recommend(ds, "C003", today)
-    ids = [d.resident_id for d in before["send"]]
+    ids = [d.resident_id for d in before["send_today"]]
     ok("R003" not in ids, "C003 Before 不应包含 R003 张姐", f"当前名单 {ids}")
     ok(len(ids) >= 3, "C003 Before 名单不应过小", f"当前 {len(ids)} 人")
 
     # 2. C003 After：张姐进入，且理由引用了刚才的互动
     after_ds = quick_capture_after(ds, today)
     after = recommend(after_ds, "C003", today)
-    after_ids = [d.resident_id for d in after["send"]]
+    after_ids = [d.resident_id for d in after["send_today"]]
     ok("R003" in after_ids, "C003 After 应包含 R003 张姐", f"当前名单 {after_ids}")
     ok(set(after_ids) - set(ids) == {"R003"},
        "Before→After 只应新增 R003", f"差异 {set(after_ids) - set(ids)}")
-    d3 = next((d for d in after["send"] if d.resident_id == "R003"), None)
+    d3 = next((d for d in after["send_today"] if d.resident_id == "R003"), None)
     ok(d3 and ("E2" in d3.evidence or "E3" in d3.evidence),
        "R003 的 After 推荐理由必须来自近期互动而非长期兴趣",
        f"evidence={d3.evidence if d3 else None}")
@@ -309,8 +317,9 @@ def check_demo_invariants(ds: Dataset, today: dt.datetime):
 
     # 4. 陈叔不是被整体屏蔽：非促销的东湖内容他照收
     c001 = recommend(ds, "C001", today)
-    ok("R009" in [d.resident_id for d in c001["send"]],
+    ok("R009" in [d.resident_id for d in c001["send_today"]],
        "R009 陈叔应仍然收到 C001 东湖早市（证明 NO_SEND 是按主题而非按人）")
+    ok(not c001["hold"], "C001 不应有 HOLD 居民", f"当前 {[d.resident_id for d in c001['hold']]}")
 
     # 5. 王阿姨的上门助浴：服务库里确实没有供给
     bath = [s for s in ds.services
@@ -326,16 +335,38 @@ def check_demo_invariants(ds: Dataset, today: dt.datetime):
     ok(len(zhang) == 2, "应保留两位张姐用于演示重名消歧", f"当前 {len(zhang)} 位")
     ok(len({r["identify_note"] for r in zhang}) == 2, "两位张姐的 identify_note 必须不同")
 
-    # 7. 小刘：今日不主动触达
-    hold = [d for d in recommend(ds, "C005", today)["no_send"] + before["send"] + before["not_eligible"]
-            if d.resident_id == "R018" and d.hold]
-    ok(hold, "R018 小刘应被标记为今日不主动触达（近期负反馈）")
+    # 7. HOLD 与执行名单：必须存在一个真实的 SEND+HOLD 场景，且它不进当天名单
+    c011 = recommend(ds, "C011", today)
+    held = [d.resident_id for d in c011["hold"]]
+    ok("R018" in held,
+       "C011 应把 R018 小刘判为 HOLD（内容适配，但今日不主动触达）", f"当前 HOLD {held}")
+    ok("R018" not in [d.resident_id for d in c011["send_today"]],
+       "HOLD 居民不得出现在当天执行名单 target_residents 里")
+    ok("R018" in [d.resident_id for d in c011["eligible"]],
+       "HOLD 不应丢失适配信息：R018 仍应属于 eligible")
 
-    # 8. 至少要有一条已过期内容，用来演示时效判断
-    expired = [c for c in ds.contents if c["status"] == "expired"]
-    ok(expired, "Demo 需要至少 1 条 expired 内容")
+    # 8. unable_to_resolve 的需求必须还能被未来的新供给重新匹配
+    ok(any(n["need_id"] == "N004" for n in ds.unmet_needs_of("R022")),
+       "unable_to_resolve 的 Need 应仍算未满足，否则未来引入服务时匹配不回原居民")
+    probe = copy.deepcopy(ds)
+    probe.contents.append({
+        "content_id": "C900", "title": "（探针）上门老人理发", "source": "", "source_url": "",
+        "summary": "新引入的上门理发服务。", "content_type": "老人服务",
+        "topic_tags": "老人服务", "target_population": "老人家庭", "region": "东湖",
+        "publish_time": f"{today:%Y-%m-%d %H:%M}", "event_time": "",
+        "expire_at": f"{today + dt.timedelta(days=30):%Y-%m-%d %H:%M}",
+        "commercial_level": "service", "risk_level": "low", "status": "active",
+        "operator_note": "",
+    })
+    rematched = [d.resident_id for d in recommend(probe, "C900", today)["send_today"]]
+    ok("R022" in rematched,
+       "东湖引入新服务后，此前 unable_to_resolve 的居民应重新进入候选",
+       f"当前候选 {rematched}")
 
-    # 9. 未满足需求必须存在，运营摘要才有招商线索可讲
+    # 9. 至少要有一条已过期内容，用来演示时效判断
+    ok([c for c in ds.contents if c["status"] == "expired"], "Demo 需要至少 1 条 expired 内容")
+
+    # 10. 未满足需求必须存在，运营摘要才有招商线索可讲
     unmet = [n for n in ds.needs if n["status"] == "unable_to_resolve"]
     ok(len(unmet) >= 2, "Demo 需要至少 2 条 unable_to_resolve 的 Need", f"当前 {len(unmet)} 条")
 
@@ -357,18 +388,26 @@ def explain(ds: Dataset, content_id: str, today: dt.datetime, after_qc: bool):
     if result["gate"]:
         print(f"\n  ⛔ {result['gate']}")
         return
-    print(f"\n  SEND ({len(result['send'])})")
-    for d in result["send"]:
-        print(f"    {d.resident_id} {d.display_name:<6} [{'+'.join(d.evidence)}]"
-              f"{' ⏸HOLD' if d.hold else ''}  {d.reason}")
-    print(f"\n  NO_SEND ({len(result['no_send'])})")
+    print(f"\n  当天执行名单 target_residents（{len(result['send_today'])} 人）")
+    for d in result["send_today"]:
+        print(f"    {d.resident_id} {d.display_name:<6} [{'+'.join(d.evidence)}]  {d.reason}")
+    print(f"\n  今日不主动触达 HOLD（{len(result['hold'])} 人，内容适配但暂停）")
+    for d in result["hold"]:
+        print(f"    {d.resident_id} {d.display_name:<6} [{'+'.join(d.evidence)}]  {d.reason}")
+    if not result["hold"]:
+        print("    （无）")
+    print(f"\n  NO_SEND（{len(result['no_send'])} 人）")
     for d in result["no_send"]:
         print(f"    {d.resident_id} {d.display_name:<6} {d.reason}")
     if not result["no_send"]:
         print("    （无：没有居民的明确禁忌与本内容冲突）")
     print(f"\n  不合格 {len(result['not_eligible'])} 人（无主题依据或人群不符，不算 NO_SEND）")
-    print(f"\n  target_residents  = {format_targets(result['send'])}")
+    if result["content"]["commercial_level"] == "service":
+        print("\n  ⚠ 本条为服务类内容：以上是**候选集合**，不是最终答案。\n"
+              "     Agent 还需对每位候选做能力级核对（类目相同 ≠ 能办同一件事）。")
+    print(f"\n  target_residents  = {format_targets(result['send_today'])}")
     print(f"  no_send_residents = {format_targets(result['no_send'])}")
+    print(f"  hold_residents    = {format_targets(result['hold'])}")
 
 
 # ---------------------------------------------------------------- main

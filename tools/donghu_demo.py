@@ -87,7 +87,8 @@ SCHEMA = {
                  "contact", "status", "operator_note"],
     "Push_Plans": ["push_id", "push_date", "content_id", "target_residents", "target_segment",
                    "recommend_reason", "message_text", "no_send_residents", "no_send_reason",
-                   "review_status", "send_status", "operator_note"],
+                   "hold_residents", "hold_reason", "review_status", "send_status",
+                   "operator_note"],
 }
 
 # ---------------------------------------------------------------- 规则参数
@@ -146,9 +147,17 @@ class Dataset:
     def interactions_of(self, rid):
         return [i for i in self.interactions if i["resident_id"] == rid]
 
-    def open_needs_of(self, rid):
+    def unmet_needs_of(self, rid):
+        """尚未被满足的 Need。
+
+        注意 unable_to_resolve 也算未满足：它表示"当前没有供给"，不是"这件事不用办了"。
+        把它排除出匹配，会切断 未满足需求 → 服务引入/招商 → 重新连接居民
+        这条商业闭环——王阿姨的助浴需求在东湖引入助浴服务后反而匹配不上她本人。
+        只有 resolved 才是真正关闭。
+        """
         return [n for n in self.needs
-                if n["resident_id"] == rid and n["status"] in ("new", "following")]
+                if n["resident_id"] == rid
+                and n["status"] in ("new", "following", "unable_to_resolve")]
 
 
 # ---------------------------------------------------------------- 规则引擎
@@ -240,8 +249,8 @@ def evaluate(ds: Dataset, content: dict, resident: dict, today: dt.datetime) -> 
 
     # --- 服务类内容：必须有未关闭的同类 Need ---
     if content["commercial_level"] == "service":
-        if not any(n["need_category"] in tags for n in ds.open_needs_of(rid)):
-            return out("NOT_ELIGIBLE", "服务类内容需要未关闭的同类 Need 才主动推荐", evidence, hold=hold)
+        if not any(n["need_category"] in tags for n in ds.unmet_needs_of(rid)):
+            return out("NOT_ELIGIBLE", "服务类内容需要未满足的同类 Need 才主动推荐", evidence, hold=hold)
 
     return out("SEND", "；".join(notes), evidence, hold=hold)
 
@@ -257,14 +266,25 @@ def recommend(ds: Dataset, content_id: str, today: dt.datetime) -> dict:
         gate = f"内容 status={c['status']}，不参与推荐"
     else:
         exp = parse_time(c["expire_at"])
-        if exp and exp < today:
+        if exp is None:
+            # 空 expire_at 曾经等同于"永不过期"，是最危险的静默失效：
+            # 活动结束几周后仍在推。判不了时效就应该留在 draft。
+            gate = "内容 status=active 但 expire_at 为空，不参与推荐（时效无法判定时应保留 draft）"
+        elif exp < today:
             gate = f"内容已过 expire_at（{c['expire_at']}），不参与推荐"
 
     decisions = [evaluate(ds, c, r, today) for r in ds.residents]
+    eligible = [] if gate else [d for d in decisions if d.outcome == "SEND"]
     return {
         "content": c,
         "gate": gate,
-        "send": [] if gate else [d for d in decisions if d.outcome == "SEND"],
+        # 三层语义，见 config/recommendation-rules.md：
+        #   eligible   = 内容与居民适配
+        #   hold       = 适配，但今日不应主动触达
+        #   send_today = eligible - hold  ← Push Plan.target_residents 只能由它生成
+        "eligible": eligible,
+        "send_today": [d for d in eligible if not d.hold],
+        "hold": [d for d in eligible if d.hold],
         "no_send": [] if gate else [d for d in decisions if d.outcome == "NO_SEND"],
         "not_eligible": [d for d in decisions if d.outcome == "NOT_ELIGIBLE"],
     }
