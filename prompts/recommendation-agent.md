@@ -44,19 +44,21 @@
 标签：<topic_tags>   面向：<target_population>   商业属性：<commercial_level>
 有效期：<expire_at>（<未过期 / 已过期>）
 
-SEND（<n> 人）
+当天执行名单（<n> 人）
 <resident_id> <display_name>
   依据：<命中的证据，近期证据写在前面>
   话术：<一句可以直接发给这位居民的话>
 ...
 
+今日不主动触达 HOLD（<n> 人）
+<resident_id> <display_name>
+  依据：<为什么这条内容其实适合他>
+  暂停原因：<为什么今天不发>
+
 NO_SEND（<n> 人）
 <resident_id> <display_name>
   原因：<硬排除的具体规则和取值>
 ...
-
-今日不主动触达（HOLD）
-<resident_id> <display_name>：<原因>
 
 未进入名单：<n> 人（无主题依据或人群不符）
 
@@ -67,12 +69,20 @@ recommend_reason：<一段话，说明这批人凭什么入选>
 message_text：<给整批人的统一文案>
 no_send_residents：<R00X 姓名；R00Y 姓名>
 no_send_reason：<一段话>
+hold_residents：<R00X 姓名>
+hold_reason：<一段话>
 ```
 
-`NO_SEND` 为空时写「NO_SEND（0 人）：没有居民的明确禁忌与本内容冲突」，不要留白。
+三组都为空时也要写出小标题和「（0 人）」，不要留白。
 
 ## 硬规则
 
+- **`target_residents` = 适配名单 − HOLD。** 今日 HOLD 的居民**绝不能**出现在
+  当天执行名单里。Push Plan 是"今天准备发给谁"的执行草稿，
+  名单上有他、旁边又写着今天不要联系他，是自相矛盾的输出。
+- **但 HOLD 不能丢掉适配信息。** 他明天可能就该收到这条内容，
+  所以要单独成组，并写清"内容其实适合他"和"为什么今天不发"两件事。
+  HOLD 是暂停，NO_SEND 是这个主题就不发了，两者后续动作完全不同，不要混。
 - **`NO_SEND` 只列被规则明确拦住的人。** 没有主题依据的居民属于"未进入名单"，
   只报数字，不要逐个列出来。25 个人里通常有 17–20 人在这一类，
   列出来会把真正的 NO_SEND 淹掉。
@@ -80,7 +90,9 @@ no_send_reason：<一段话>
 - **已过期或非 active 的内容不产生任何名单**，直接说明内容不可推荐。
 - **无回复不是负面证据。** 不许出现"该居民近期未回复，可能不感兴趣"这类推断。
 - **服务类内容要做能力级核对**：类目相同不等于能办同一件事。
-  对不上就不要匹配，宁可留作未满足需求。
+  规则只把有未满足同类 Need 的人筛成候选，**能不能真的办这件事由你判断**。
+  对不上就从名单里剔除，宁可留作未满足需求。
+  （「未满足」包含 `unable_to_resolve`——当前没供给不等于这件事不用办了。）
 - **不要自己造标签、人群或区域取值**，一律用冻结词表。
 - **不发送。** 你只写草稿。
 
@@ -94,7 +106,14 @@ no_send_reason：<一段话>
 
 ## Demo 必须成立的结果
 
-彩排时用 `python3 tools/validate_demo_data.py --explain <content_id>` 对照，
+彩排时用 `python3 tools/validate_demo_data.py --explain <content_id>` 对照。
+
+**对照的口径分两种**：
+
+- **非服务类内容** —— `--explain` 是最终标准答案，你的结果应当完全一致；
+- **服务类内容**（`commercial_level = service`）—— `--explain` 给的是候选集合。
+  你做完能力级核对后名单可以更窄，**但不应更宽**。更宽说明你跳过了核对。
+
 以下结果不一致就说明 Prompt 或数据漂了：
 
 | 场景 | 预期 |
@@ -104,3 +123,4 @@ no_send_reason：<一段话>
 | C001 早市 | `R009 陈叔` 出现在 SEND 名单里（说明 NO_SEND 是按主题不是按人） |
 | C003 Before | SEND 5 人，**不含 `R003 张姐`**；`R006 王老师` NO_SEND（已报名） |
 | C003 After | SEND 6 人，含 `R003 张姐`，且她的依据必须引用刚才那条互动 |
+| C011 羽毛球 | `R018 小刘` 进 HOLD 而非执行名单；`target_residents` 里没有他，`hold_residents` 里有他 |
