@@ -1,0 +1,21 @@
+interaction_id,resident_id,interaction_time,interaction_type,related_type,related_id,raw_note,ai_summary,topic_tags,sentiment,created_by
+I001,R001,2026-09-18 18:20,activity_inquiry,content,C012,问周末有没有适合孩子的绘本活动。,询问儿童周末绘本活动。,亲子活动,neutral,operator
+I002,R004,2026-09-19 09:20,active_inquiry,content,C001,问周末市场有没有新鲜蔬菜活动。,关注东湖周末买菜活动。,买菜生鲜,positive,operator
+I003,R005,2026-09-16 10:00,service_inquiry,service,,问有没有适合老人上门的生活服务。,咨询老人上门服务。,老人服务,neutral,operator
+I004,R006,2026-09-19 19:05,activity_signup,content,C003,报名了儿童自然体验活动。,已报名亲子自然体验活动。,亲子活动,positive,operator
+I005,R007,2026-09-12 14:30,service_inquiry,service,S001,问家里大扫除能不能上门。,咨询上门家政。,家政服务,neutral,operator
+I006,R008,2026-09-13 08:40,active_inquiry,content,C008,问施工路段是否影响上班路线。,关注通勤交通信息。,交通出行,neutral,operator
+I007,R009,2026-09-17 17:00,negative_feedback,content,C005,优惠消息少发一点，我不太看。,明确不希望接收优惠促销。,优惠促销,negative,operator
+I008,R010,2026-09-14 11:00,activity_inquiry,content,C006,问免费测血压老人能不能参加。,咨询健康活动。,健康活动,neutral,operator
+I009,R011,2026-09-18 20:10,active_inquiry,content,C015,问咖啡课堂还有没有名额。,关注文化娱乐活动。,文化娱乐,positive,operator
+I010,R012,2026-09-15 10:20,service_request,service,,想找能上门照顾老人半天的服务。,存在老人上门照护需求。,老人服务,neutral,operator
+I011,R013,2026-09-19 15:00,service_request,service,S003,电风扇坏了，问附近能不能修。,需要小家电维修。,维修服务,neutral,operator
+I012,R015,2026-09-16 18:00,activity_inquiry,content,C012,问绘本活动适合几年级。,咨询儿童教育活动。,教育学习;亲子活动,neutral,operator
+I013,R016,2026-09-10 08:30,active_inquiry,content,C007,问便民服务日有没有修鞋。,关注便民服务。,便民信息,neutral,operator
+I014,R018,2026-09-20 11:15,negative_feedback,content,C005,最近消息有点多，先少发一点。,明确希望减少主动消息。,优惠促销,negative,operator
+I015,R019,2026-09-18 16:40,positive_feedback,content,C013,旧衣回收这种活动挺好，下次也可以发我。,对社区公益活动正反馈。,社区活动,positive,operator
+I016,R020,2026-09-20 07:50,active_inquiry,content,C008,今天附近路况怎么样？,主动询问通勤交通。,交通出行,neutral,operator
+I017,R021,2026-09-20 09:05,positive_feedback,content,C001,这种时令菜早市我会去，挺实用。,对东湖时令菜早市正反馈。,买菜生鲜;社区活动,positive,operator
+I018,R022,2026-09-17 10:15,service_request,service,,问有没有上门给老人理发的。,需要老人上门理发服务。,老人服务,neutral,operator
+I019,R023,2026-09-19 13:25,service_request,service,S003,想找人修电饭煲。,需要小家电维修。,维修服务,neutral,operator
+I020,R025,2026-09-18 08:10,active_inquiry,content,C001,问周末早市几点开始。,关注买菜生鲜信息。,买菜生鲜,neutral,operator
