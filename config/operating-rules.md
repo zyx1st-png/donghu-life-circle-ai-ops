@@ -7,6 +7,7 @@
 3. 明确负反馈优先于 AI 推断。
 4. 服务推荐优先由明确 Need 或 Service Intent 触发，且必须做能力级核对。
 5. 未满足的需求包含 `unable_to_resolve`——当前没供给不等于这件事不用办了。
+   `Needs` 是待办事项的权威来源，`recent_needs` 只是派生画像，清了画像不等于需求关闭。
 6. Need 的判定看"有没有具体待办事项"，不看句式。
 7. AI 只生成 Draft，运营确认后再执行居民触达。
 8. 真实居民敏感数据不得提交到 GitHub。
@@ -56,6 +57,8 @@ status = active  →  expire_at 必须存在且晚于当前时间
 | HOLD | `R018 小刘` 在 C011 上判为 HOLD：内容适配但今日暂停 |
 | HOLD | HOLD 居民不得出现在任何 `target_residents` 里，但保留在 `hold_residents` |
 | 需求闭环 | `unable_to_resolve` 的 Need 仍算未满足；东湖引入新服务后能重新匹配回原居民 |
+| 需求闭环 | 即使居民的 `recent_needs` / 兴趣 / 互动全被清空，仅凭 Needs 表里的记录也必须能重新匹配 |
+| 时间边界 | `expire_at <= now` 即过期；未来时间的互动不得被当成近期证据 |
 | 时效 | 至少 1 条 `expired` 内容 |
 | 招商线索 | 至少 2 条 `unable_to_resolve` 的 Need |
 

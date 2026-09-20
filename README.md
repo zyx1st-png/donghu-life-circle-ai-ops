@@ -148,6 +148,7 @@ T0 MCP 能力验证（docs/t0-mcp-spike.md，A 组全 PASS）
 | 重算全部 Push Plans 名单 | `demo/seed-data/Push_Plans.csv` | 原名单无法由任何成文规则复现，彩排时表里的 Before 和 Agent 实时输出对不上 |
 | `active` 内容必须有 `expire_at` | `config/recommendation-rules.md` | 留空曾等同于"永不过期"，活动结束几周后仍会被推，且完全无声 |
 | Need 判定看待办事项而非句式 | `prompts/ops-agent.md` | 「有没有靠谱的保洁？」是疑问句但确是真实需求，按句式切会系统性漏掉商业需求 |
+| 未满足 Need 本身即推荐证据（E0） | `config/recommendation-rules.md` | `Needs` 是待办事项的权威来源；只认派生的 `recent_needs` 会让画像一被清理，真实需求就永远匹配不回本人 |
 
 ## 商业模式背景
 

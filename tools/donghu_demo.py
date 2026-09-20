@@ -96,6 +96,25 @@ SCHEMA = {
 RECENT_INTERACTION_DAYS = 14   # E3：多久之内的互动算"近期"
 NEGATIVE_HOLD_DAYS = 7         # HOLD：负反馈后多久不主动触达
 
+
+def age_in_days(today: dt.datetime, t: dt.datetime | None) -> int | None:
+    """记录距演示当天有多少天。未来时间返回负数，调用方必须拒绝。
+
+    用日期粒度而不是时刻粒度：同一天的互动一律算 age=0，
+    否则"上午 11 点录的互动"和"中午 12 点的基准时刻"之间几小时的差
+    会让判定随运行时刻漂移。
+    """
+    if t is None:
+        return None
+    return (today.date() - t.date()).days
+
+
+def is_recent(today: dt.datetime, t: dt.datetime | None, window: int) -> bool:
+    """0 <= age <= window。未来时间不算近期——否则一条误填成明天的记录
+    会被当成"刚刚发生"，而且永远不会过期。"""
+    age = age_in_days(today, t)
+    return age is not None and 0 <= age <= window
+
 # ---------------------------------------------------------------- 载入
 
 def _split(v: str) -> set[str]:
@@ -189,7 +208,7 @@ def evaluate(ds: Dataset, content: dict, resident: dict, today: dt.datetime) -> 
         for i in ds.interactions_of(rid):
             if i["interaction_type"] == "negative_feedback":
                 t = parse_time(i["interaction_time"])
-                if t and (today - t).days <= NEGATIVE_HOLD_DAYS:
+                if is_recent(today, t, NEGATIVE_HOLD_DAYS):
                     hold, hold_note = True, f"{t:%Y-%m-%d} 明确反馈消息过多，今日整体不主动触达"
                     break
 
@@ -212,7 +231,16 @@ def evaluate(ds: Dataset, content: dict, resident: dict, today: dt.datetime) -> 
             return out("NO_SEND", "已报名本条活动，不重复推送", hold=hold)
 
     # --- 证据（E 系列）---
+    # E0 排在最前，因为 Needs 才是"具体待解决事项"的权威来源。
+    # recent_needs / recent_interests 是为了看着方便而派生出来的画像字段，
+    # 会被运营在画像整理时清空。如果只认派生字段，一条还躺在 Needs 表里
+    # 的真实未满足需求，就会因为画像被清理而永远匹配不回本人。
     evidence, notes = [], []
+    need_hits = [n for n in ds.unmet_needs_of(rid) if n["need_category"] in tags]
+    if need_hits:
+        evidence.append("E0")
+        notes.append("未满足需求：" + "；".join(
+            f"{n['need_id']} {n['need_summary']}" for n in need_hits))
     if _split(resident["recent_needs"]) & tags:
         evidence.append("E1")
         notes.append(f"近期需求命中 {'、'.join(sorted(_split(resident['recent_needs']) & tags))}")
@@ -221,7 +249,7 @@ def evaluate(ds: Dataset, content: dict, resident: dict, today: dt.datetime) -> 
         notes.append(f"近期关注 {'、'.join(sorted(_split(resident['recent_interests']) & tags))}")
     for i in ds.interactions_of(rid):
         t = parse_time(i["interaction_time"])
-        if t and (today - t).days <= RECENT_INTERACTION_DAYS and (_split(i["topic_tags"]) & tags):
+        if is_recent(today, t, RECENT_INTERACTION_DAYS) and (_split(i["topic_tags"]) & tags):
             if i["interaction_type"] != "negative_feedback":
                 evidence.append("E3")
                 notes.append(f"{t:%m-%d} 互动：{i['ai_summary'] or i['raw_note']}")
@@ -233,7 +261,9 @@ def evaluate(ds: Dataset, content: dict, resident: dict, today: dt.datetime) -> 
     if not evidence:
         return out("NOT_ELIGIBLE", "无任何主题依据", hold=hold)
 
-    recent_evidence = bool({"E1", "E2", "E3"} & set(evidence))
+    # E0 与 E1/E2/E3 同属"明确且当前有效"的证据，可以越过人群门槛。
+    # 一个人有没有待办的具体需求，比他属于哪个家庭阶段更有说服力。
+    recent_evidence = bool({"E0", "E1", "E2", "E3"} & set(evidence))
 
     # --- 人群门槛 ---
     tp = _split(content["target_population"])
@@ -247,10 +277,9 @@ def evaluate(ds: Dataset, content: dict, resident: dict, today: dt.datetime) -> 
     if content["commercial_level"] == "promotion" and not recent_evidence:
         return out("NOT_ELIGIBLE", "促销类内容要求近期依据，仅有长期兴趣不足", evidence, hold=hold)
 
-    # --- 服务类内容：必须有未关闭的同类 Need ---
-    if content["commercial_level"] == "service":
-        if not any(n["need_category"] in tags for n in ds.unmet_needs_of(rid)):
-            return out("NOT_ELIGIBLE", "服务类内容需要未满足的同类 Need 才主动推荐", evidence, hold=hold)
+    # --- 服务类内容：必须由 Need 本身触发，光有兴趣不够 ---
+    if content["commercial_level"] == "service" and "E0" not in evidence:
+        return out("NOT_ELIGIBLE", "服务类内容需要未满足的同类 Need 才主动推荐", evidence, hold=hold)
 
     return out("SEND", "；".join(notes), evidence, hold=hold)
 
@@ -270,7 +299,8 @@ def recommend(ds: Dataset, content_id: str, today: dt.datetime) -> dict:
             # 空 expire_at 曾经等同于"永不过期"，是最危险的静默失效：
             # 活动结束几周后仍在推。判不了时效就应该留在 draft。
             gate = "内容 status=active 但 expire_at 为空，不参与推荐（时效无法判定时应保留 draft）"
-        elif exp < today:
+        elif exp <= today:
+            # 用 <= ：expire_at 是"到这一刻为止仍可发"的边界，到点即失效。
             gate = f"内容已过 expire_at（{c['expire_at']}），不参与推荐"
 
     decisions = [evaluate(ds, c, r, today) for r in ds.residents]

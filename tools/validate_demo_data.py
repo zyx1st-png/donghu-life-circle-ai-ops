@@ -178,7 +178,7 @@ def check_dates(ds: Dataset, today: dt.datetime):
         pub, ev, exp = (parse_time(c[k]) for k in ("publish_time", "event_time", "expire_at"))
         if pub and ev and ev < pub:
             err(f"[Contents] {c['content_id']} event_time 早于 publish_time")
-        if c["status"] == "active" and exp and exp < today:
+        if c["status"] == "active" and exp and exp <= today:
             err(f"[Contents] {c['content_id']} status=active 但已过 expire_at "
                 f"({c['expire_at']} < {today:%Y-%m-%d %H:%M})，"
                 f"推荐 Agent 会拒绝它 —— 请先跑 tools/shift_demo_dates.py")
@@ -194,12 +194,12 @@ def check_dates(ds: Dataset, today: dt.datetime):
             if li != newest:
                 err(f"[Residents] {r['resident_id']}.last_interaction_at={r['last_interaction_at']} "
                     f"与 Interactions 最新记录 {newest:%Y-%m-%d %H:%M} 不一致")
-        if li and li > today:
+        if li and li.date() > today.date():
             err(f"[Residents] {r['resident_id']}.last_interaction_at 晚于演示当天")
 
     for i in ds.interactions:
         t = parse_time(i["interaction_time"])
-        if t and t > today:
+        if t and t.date() > today.date():
             err(f"[Interactions] {i['interaction_id']} 互动时间晚于演示当天")
 
 
@@ -345,23 +345,50 @@ def check_demo_invariants(ds: Dataset, today: dt.datetime):
     ok("R018" in [d.resident_id for d in c011["eligible"]],
        "HOLD 不应丢失适配信息：R018 仍应属于 eligible")
 
-    # 8. unable_to_resolve 的需求必须还能被未来的新供给重新匹配
+    # 8. 隔离回归：Needs 表本身必须足以让居民重新进入候选。
+    #    把 R022 的近期画像、长期兴趣和全部互动清空，只留 Needs 表里那条
+    #    unable_to_resolve 的 N004。东湖新增对应服务后，他必须还能被匹配到。
+    #    recent_needs 是派生画像，会被运营整理掉；Needs 才是权威来源。
     ok(any(n["need_id"] == "N004" for n in ds.unmet_needs_of("R022")),
-       "unable_to_resolve 的 Need 应仍算未满足，否则未来引入服务时匹配不回原居民")
+       "unable_to_resolve 的 Need 应仍算未满足")
     probe = copy.deepcopy(ds)
+    stripped = probe.resident("R022")
+    for f in ("recent_needs", "recent_interests", "long_term_interests", "profile_summary"):
+        stripped[f] = ""
+    probe.interactions = [i for i in probe.interactions if i["resident_id"] != "R022"]
     probe.contents.append({
-        "content_id": "C900", "title": "（探针）上门老人理发", "source": "", "source_url": "",
-        "summary": "新引入的上门理发服务。", "content_type": "老人服务",
+        "content_id": "C900", "title": "（探针）新引入上门老人理发", "source": "", "source_url": "",
+        "summary": "东湖新引入的上门理发服务。", "content_type": "老人服务",
         "topic_tags": "老人服务", "target_population": "老人家庭", "region": "东湖",
         "publish_time": f"{today:%Y-%m-%d %H:%M}", "event_time": "",
         "expire_at": f"{today + dt.timedelta(days=30):%Y-%m-%d %H:%M}",
         "commercial_level": "service", "risk_level": "low", "status": "active",
         "operator_note": "",
     })
-    rematched = [d.resident_id for d in recommend(probe, "C900", today)["send_today"]]
-    ok("R022" in rematched,
-       "东湖引入新服务后，此前 unable_to_resolve 的居民应重新进入候选",
-       f"当前候选 {rematched}")
+    probe_res = recommend(probe, "C900", today)
+    d22 = next((d for d in probe_res["send_today"] if d.resident_id == "R022"), None)
+    ok(d22 is not None,
+       "画像被清空后，仅凭 Needs 表里的未满足需求，居民仍须进入服务候选",
+       f"当前候选 {[d.resident_id for d in probe_res['send_today']]}")
+    ok(d22 and "E0" in d22.evidence,
+       "该候选的证据必须来自 Needs 表（E0），而不是派生画像字段",
+       f"evidence={d22.evidence if d22 else None}")
+
+    # 8b. 时间边界：未来记录不得被当成"近期"，expire_at 到点即失效
+    fut = copy.deepcopy(ds)
+    fut.interactions.append({
+        "interaction_id": "I900", "resident_id": "R002",
+        "interaction_time": f"{today + dt.timedelta(days=3):%Y-%m-%d %H:%M}",
+        "interaction_type": "activity_inquiry", "related_type": "content", "related_id": "C003",
+        "raw_note": "（探针）误填成未来时间的互动。", "ai_summary": "探针。",
+        "topic_tags": "亲子活动", "sentiment": "neutral", "created_by": "operator",
+    })
+    ok("R002" not in [d.resident_id for d in recommend(fut, "C003", today)["send_today"]],
+       "未来时间的互动不得被当成近期证据")
+    exp = copy.deepcopy(ds)
+    exp.content("C003")["expire_at"] = f"{today:%Y-%m-%d %H:%M}"
+    ok(recommend(exp, "C003", today)["gate"] is not None,
+       "expire_at 正好等于当前时刻时应判为已过期")
 
     # 9. 至少要有一条已过期内容，用来演示时效判断
     ok([c for c in ds.contents if c["status"] == "expired"], "Demo 需要至少 1 条 expired 内容")
