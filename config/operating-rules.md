@@ -81,3 +81,18 @@ python3 tools/validate_demo_data.py
 ```
 
 有 ERROR 就不要进彩排。
+
+## 每轮彩排前
+
+```bash
+python3 tools/validate_demo_data.py                 # 仓库侧数据自洽
+python3 tools/mcp_payloads.py check-options         # 线上词表有没有被悄悄改过
+```
+
+第二条不能省：T0 B3 实测，Agent 写入词表外的值会**静默新建选项**并替换原值，
+不报错。词表一旦漂移，推荐规则的集合运算就开始失准，而表面上名单照常出。
+
+## 平台读写
+
+所有 MCP 读写规则集中在 `docs/mcp-write-contract.md`，三个 Prompt 都指向它。
+一句话：**"调用返回 success" 不等于 "数据写进去了"，关键写入之后必须读回核对。**
