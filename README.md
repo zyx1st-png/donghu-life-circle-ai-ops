@@ -21,59 +21,82 @@ MVP-0 需要在 5–10 分钟内稳定演示：
 - 企业微信：居民触达与人工沟通
 - GitHub：PRD、Prompt、Demo 数据与开发资产
 
+## 职责划分
+
+| | 负责 |
+|---|---|
+| **本仓库** | 数据结构、Demo 数据、判定规则、Prompt、校验工具、演示脚本 |
+| **WorkBuddy** | SmartSheet MCP 实际连接、建表、导入、Agent 运行、真实环境验证 |
+
+仓库侧不假设任何 MCP 能力可用。需要真实环境确认的事项，
+写成可执行的验证清单交给 WorkBuddy：`docs/t0-mcp-spike.md`。
+
 ## MVP-0 范围
 
-只保留 6 张核心表：
+只保留 6 张核心表：Residents、Contents、Interactions、Needs、Services、Push Plans。
 
-- Residents
-- Contents
-- Interactions
-- Needs
-- Services
-- Push Plans
-
-只保留 3 个 Agent：
-
-- Content Agent
-- Recommendation Agent
-- Ops Agent
+只保留 3 个 Agent：Content Agent、Recommendation Agent、Ops Agent。
 
 ## 当前明确不做
 
-PostgreSQL、FastAPI、独立前端、小程序、Signal 表、Push Target、微信客服机器人、自动群聊分析、订单、支付、生产级幂等等均不属于 MVP-0。
+PostgreSQL、FastAPI、独立前端、小程序、Signal 表、Push Target、微信客服机器人、
+自动群聊分析、订单、支付、生产级幂等等均不属于 MVP-0。
 
 ## 目录
 
 ```text
-PRD.md
+PRD.md                          需求基线（v0.4.1）
 README.md
 
-docs/
-  demo-guide.md
+config/
+  tags.md                       固定主题标签词表（17 项）
+  vocabulary.md                 人群 / 区域 / 单选字段的冻结取值
+  recommendation-rules.md       推荐判定规则 —— Agent 和校验工具的共同依据
+  operating-rules.md            运营原则与 Demo 剧情不变量
 
 prompts/
   content-agent.md
   recommendation-agent.md
   ops-agent.md
 
-config/
-  tags.md
-  operating-rules.md
+docs/
+  business-model.md             商业模式背景（business context，非实施规格）
+  t0-mcp-spike.md               T0 MCP 能力验证清单（交 WorkBuddy 执行）
+  sheet-setup.md                SmartSheet 建表规格
+  demo-guide.md                 演示手册与台词
+  rehearsal-log.md              彩排记录模板
 
 demo/
-  seed-data/
-    Residents.csv
-    Contents.csv
-    Interactions.csv
-    Needs.csv
-    Services.csv
-    Push_Plans.csv
+  anchor.txt                    Demo 数据的日期锚点
+  seed-data/*.csv               6 张表的演示数据
+
+tools/
+  donghu_demo.py                数据模型 + 推荐规则引擎
+  validate_demo_data.py         数据校验 + 剧情不变量 + 预期结果打印
+  shift_demo_dates.py           把整套 Demo 日期平移到新的演示日
 ```
+
+## 常用命令
+
+```bash
+# 校验 seed 数据（改完数据必跑，全绿才进彩排）
+python3 tools/validate_demo_data.py
+
+# 看某条内容的逐人推荐判定，输出即"标准答案"
+python3 tools/validate_demo_data.py --explain C003
+python3 tools/validate_demo_data.py --explain C003 --after-quick-capture
+
+# 演示改期：先平移日期，否则核心内容会过期、Before/After 演不了
+python3 tools/shift_demo_dates.py --to 2026-10-11 --write
+```
+
+工具只服务于演示稳定性，不是线上运行时。
+推荐由 WorkBuddy 里的 Agent 完成；`tools/` 的作用是让"三次彩排结果一致"这件事可被验证。
 
 ## 数据纪律
 
 - 真实居民数据不得提交到本仓库。
-- Demo Seed 全部为演示数据。
+- Demo Seed 全部为演示数据，联系方式为虚拟号码。
 - `resident_id` 创建后不重命名。
 - `Interactions.raw_note` 按追加事实处理，不为还原演示而修改历史记录。
 - 密钥、Token、手机号、真实企微 ID 等不得提交 GitHub。
@@ -81,20 +104,32 @@ demo/
 ## 开工顺序
 
 ```text
-T0 MCP 基础验证
-→ 建 6 张表
+T0 MCP 能力验证（docs/t0-mcp-spike.md，A 组全 PASS）
+→ 建 6 张表（docs/sheet-setup.md）
 → 导入 Demo Seed
-→ 固定标签
 → Content Agent
 → Recommendation Agent
 → Ops Agent / Quick Capture
-→ 5 个 Demo 场景
-→ 连续彩排 3 次
+→ 跑通 5 个 Demo 场景
+→ 连续彩排 3 次（docs/rehearsal-log.md）
+→ 录制备份 Demo
 ```
 
-详细规格见 [PRD.md](./PRD.md)。
+## 与 PRD 的差异
+
+以下改动偏离了 PRD v0.4.1 的字面描述，原因写在对应文件里：
+
+| 改动 | 位置 | 原因 |
+|---|---|---|
+| Push Plans 增加 `no_send_residents` / `no_send_reason` 两列 | `docs/sheet-setup.md` | PRD §22 要求输出 NO_SEND，但没有字段存放，最有说服力的判断回到表里就看不见了 |
+| `Contents.region` 由单行文本改为单选 | `docs/sheet-setup.md` | 自由文本已经产生「东湖周边 / 东湖及周边」两种写法 |
+| 冻结人群与区域词表 | `config/vocabulary.md` | PRD §7 只冻结了主题标签，其余多选字段同样会漂 |
+| 写出完整推荐判定规则 | `config/recommendation-rules.md` | PRD 定义了展示什么，没有定义凭什么，导致同一条内容每次跑结果不同 |
+| 重算全部 Push Plans 名单 | `demo/seed-data/Push_Plans.csv` | 原名单无法由任何成文规则复现，彩排时表里的 Before 和 Agent 实时输出对不上 |
 
 ## 商业模式背景
 
 - [docs/business-model.md](./docs/business-model.md) — 机器可读的商业模式说明，用于业务背景、价值逻辑、收入方向与长期边界。
 - 该文档是 **business context**，不是 MVP 实施规格；若与实现细节冲突，以 `PRD.md` 为准。
+
+详细规格见 [PRD.md](./PRD.md)。
