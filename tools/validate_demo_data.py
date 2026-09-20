@@ -24,8 +24,9 @@ import sys
 sys.path.insert(0, __file__.rsplit("/", 1)[0])
 
 from donghu_demo import (  # noqa: E402
-    ENUMS, MULTI_FIELDS, REGIONS, SCHEMA, Dataset,
-    _split, evaluate, format_targets, parse_time, recommend,
+    DATETIME, ENUMS, FIELD_KINDS, MULTI_FIELDS, REGIONS, SCHEMA, SELECT, SINGLE, Dataset,
+    _split, evaluate, field_options, format_targets, from_cst_millis, parse_time,
+    recommend, to_cst_millis,
 )
 
 ERRORS: list[str] = []
@@ -264,6 +265,69 @@ def check_sheet_setup():
                 f"    文档: {got}\n    表头: {want}")
 
 
+def check_smartsheet_mapping(ds: Dataset):
+    """建表和写入依赖的映射必须完整且可往返。
+
+    这些错误如果留到 Build 才发现，代价是把已经建好的表推倒重来——
+    而 T0 B3 保证了写坏的多选选项还会静默留在线上。
+    """
+    for table, cols in SCHEMA.items():
+        kinds = FIELD_KINDS.get(table, {})
+        for name in cols:
+            if name not in kinds:
+                err(f"[FIELD_KINDS] {table}.{name} 没有声明 SmartSheet 字段类型")
+        for name in kinds:
+            if name not in cols:
+                err(f"[FIELD_KINDS] {table}.{name} 声明了类型但不在 CSV 表头里")
+
+    # 每个选项字段都必须有冻结词表，否则建表时无从预设选项
+    for table, cols in FIELD_KINDS.items():
+        for name, kind in cols.items():
+            if kind in (SELECT, SINGLE):
+                try:
+                    opts = field_options(table, name)
+                except KeyError as e:
+                    err(f"[建表] {e}")
+                    continue
+                if not opts:
+                    err(f"[建表] {table}.{name} 是选项字段但词表为空")
+
+    # 绝对锚点：T0 B5 在真实环境写入 "2026-09-26 09:30" 得到的就是这个值。
+    # 只做往返自检是不够的——时区整体算错时往返仍然自洽，错误照样通过。
+    T0_ANCHOR = ("2026-09-26 09:30", 1790386200000)
+    got = to_cst_millis(T0_ANCHOR[0])
+    if got != T0_ANCHOR[1]:
+        err(f"[时间戳] 与 T0 B5 实测值不符：{T0_ANCHOR[0]} 应为 {T0_ANCHOR[1]}，"
+            f"当前算出 {got}（差 {(got - T0_ANCHOR[1]) / 3600000:+.1f} 小时）。"
+            f"写进 SmartSheet 的所有时间都会偏，且不报错")
+
+    # 所有 dateTime 取值必须能换算成东八区毫秒时间戳并原样还原。
+    # 换算错 8 小时的 expire_at 会让当天内容被判成过期，而且不报错。
+    by_attr = {"Residents": "residents", "Contents": "contents", "Interactions": "interactions",
+               "Needs": "needs", "Services": "services", "Push_Plans": "push_plans"}
+    for table, cols in FIELD_KINDS.items():
+        dt_cols = [n for n, k in cols.items() if k == DATETIME]
+        if not dt_cols:
+            continue
+        keyfield = SCHEMA[table][0]
+        for row in getattr(ds, by_attr[table]):
+            for name in dt_cols:
+                raw = (row.get(name) or "").strip()
+                if not raw:
+                    continue
+                ms = to_cst_millis(raw)
+                back = from_cst_millis(ms, date_only=(len(raw) == 10))
+                if back != raw:
+                    err(f"[时间戳] {table}.{row[keyfield]}.{name} 往返不一致: "
+                        f"{raw!r} → {ms} → {back!r}")
+
+    # Needs 的两个时间戳改成了普通 dateTime 字段（T0 C3），要自己保证前后关系
+    for n in ds.needs:
+        c, u = parse_time(n["created_at"]), parse_time(n["updated_at"])
+        if c and u and u < c:
+            err(f"[Needs] {n['need_id']} updated_at 早于 created_at")
+
+
 # ---------------------------------------------------------------- Demo 剧情不变量
 
 def quick_capture_after(ds: Dataset, today: dt.datetime) -> Dataset:
@@ -469,6 +533,7 @@ def main():
     check_dates(ds, today)
     check_push_plans(ds, today)
     check_sheet_setup()
+    check_smartsheet_mapping(ds)
     check_demo_invariants(ds, today)
 
     print(f"演示当天: {today:%Y-%m-%d}")
