@@ -93,3 +93,8 @@ T0 MCP 基础验证
 ```
 
 详细规格见 [PRD.md](./PRD.md)。
+
+## 商业模式背景
+
+- [docs/business-model.md](./docs/business-model.md) — 机器可读的商业模式说明，用于业务背景、价值逻辑、收入方向与长期边界。
+- 该文档是 **business context**，不是 MVP 实施规格；若与实现细节冲突，以 `PRD.md` 为准。
