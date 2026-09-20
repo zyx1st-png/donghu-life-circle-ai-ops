@@ -1,0 +1,7 @@
+need_id,resident_id,need_category,need_summary,urgency,status,matched_service_id,followup_note
+N001,R005,老人服务,希望找可上门陪伴/照看老人的生活服务。,normal,following,,运营继续了解具体时段
+N002,R012,老人服务,希望有人可上门照顾老人半天。,normal,unable_to_resolve,,当前服务库无对应半日照护
+N003,R013,维修服务,需要维修电风扇。,normal,resolved,S003,已匹配小家电维修
+N004,R022,老人服务,希望提供上门老人理发。,normal,unable_to_resolve,,当前无上门理发
+N005,R023,维修服务,需要维修电饭煲。,normal,following,S003,待确认上门时间
+N006,R007,家政服务,希望预约家庭大扫除。,normal,resolved,S001,已匹配基础保洁
