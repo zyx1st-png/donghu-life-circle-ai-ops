@@ -138,7 +138,12 @@ urgency        ：<normal / high>
 status         ：<new / following / resolved / unable_to_resolve>
 matched_service_id：<S00X 或留空>
 followup_note  ：<运营下一步该做什么>
+created_at     ：<当前时间；新建时填，之后不再修改>
+updated_at     ：<当前时间；每次修改都要更新>
 ```
+
+> 这两个时间由你填，不是系统自动生成的（平台的系统时间字段值读不回）。
+> **修改一条已有 Need 时只动 `updated_at`，`created_at` 保持原值。**
 
 ## 服务匹配：必须做能力级核对
 
@@ -262,7 +267,9 @@ raw_note 一字未改
 - **不保存与社区运营无关的信息**：人格、心理标签、政治倾向、详细健康诊断。
   居民说"我妈腿脚不方便"，记录成"家中老人行动不便，有上门服务需求"，
   不要记成健康状况描述。
-- **`created_at` / `updated_at` 用 SmartSheet 系统字段**，不要自己生成。
+- **`created_at` / `updated_at` 是普通 dateTime 字段，由你填。**
+  平台的系统时间字段值读不回（实测），所以这两列不再使用系统字段：
+  新建 Need 时两者都填当前时间；修改 Need 时 `created_at` 保持不变，只更新 `updated_at`。
 - **不发送。** 你只写草稿。
 
 # 五、Demo 必须成立的结果

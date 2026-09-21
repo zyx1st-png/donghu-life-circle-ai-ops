@@ -46,13 +46,17 @@ file_id（文档） → sheet_id（子表） → record_id（记录） → field
 |---|---|---|
 | `text` | `text_value` | T0 A2 实测确认 |
 | `select`（多选） | `option_value.items` 数组 | T0 A2 实测确认 |
-| `singleSelect`（单选） | `option_value.items`（单元素） | **推断**，Build 第 0 步确认 |
-| `dateTime` | `string_value`（毫秒时间戳字符串） | **推断**，Build 第 0 步确认 |
+| `singleSelect`（单选） | `option_value.items`（单元素） | **未被 T0 覆盖**，Build 第 0 步确认 |
+| `dateTime` | `string_value`（东八区毫秒时间戳字符串） | T0 A2 + B5 实测确认 |
 
-> 两处推断来自 T0 A2 记录的 `text_value / option_value / string_value` 三个键：
-> 文本和多选已实测确认，剩下的按同族与排除法推定。
-> **Build 第 0 步必须用一条探针记录确认**，确认后如有出入，
-> 只需改 `tools/mcp_payloads.py` 里的 `VALUE_KEY` 一处。
+> T0 A2 恰好测了三种字段类型（单行文本 / 多选 / 日期时间），也恰好记录了
+> `text_value / option_value / string_value` 三个取值键；B5 又单独验证了
+> 日期时间写入读回逐字一致、无时区漂移。所以这三者都有实测支撑。
+>
+> **只有 `singleSelect` 没被 T0 测到**——它不在那三种类型里，
+> 目前按"与多选同族"推定。Build 第 0 步用一条探针记录确认即可；
+> 如有出入，只需改 `tools/mcp_payloads.py` 里的 `VALUE_KEY` 一处。
+> dateTime 在 Step 0 顺手复核一下也好，但那是复核既有证据，不是补验证。
 
 ## 3. 日期时间
 
@@ -176,11 +180,16 @@ T0 C3：`createdTime` / `modifiedTime` 字段能建，但 `list_records` 读不�
 已进入 `demo/seed-data/Needs.csv`。
 
 这偏离了 PRD §29「不让 Agent 手动生成 created_at / updated_at」——
-平台不支持，只能由写入方填：
+读不回就等于对 Agent 不存在，值只能由写入方维护。
 
-- 运营新建 Need 时，Ops Agent 把两者都填成当前时间；
-- 后续修改 Need 时，只更新 `updated_at`；
-- `created_at` 一旦写入不再修改。
+**本仓库唯一的规则，其他地方不要另立一套：**
+
+| 动作 | `created_at` | `updated_at` |
+|---|---|---|
+| 新建 Need | 当前时间 | 当前时间 |
+| 修改 Need | **保持原值不变** | 当前时间 |
+
+两者都是普通 dateTime 字段，写入时同样要换算成东八区毫秒时间戳（§3）。
 
 ## 9. 并发
 
