@@ -1,0 +1,15 @@
+{
+  "file_id": "LdQgWmgNpfub",
+  "title": "东湖生活圈 AI 运营系统 - MVP0 Demo",
+  "url": "https://docs.qq.com/smartsheet/DTGRRZ1dtZ05wZnVi",
+  "built_at": "2026-09-21",
+  "sheets": {
+    "Residents": "mIrCdY",
+    "Services": "m5ll0a",
+    "Contents": "ppEEv0",
+    "Interactions": "3Kd0Sf",
+    "Needs": "AbFDio",
+    "Push_Plans": "djadLC"
+  },
+  "note": "仅 Build 所需的非凭证 ID；不含 token/cookie/分享密钥。所有数据为假数据。"
+}

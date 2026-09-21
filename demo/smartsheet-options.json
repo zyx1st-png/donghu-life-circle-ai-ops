@@ -1,0 +1,1900 @@
+{
+  "Residents": {
+    "fields": [
+      {
+        "before_field_id": "",
+        "field_id": "fabcde",
+        "field_title": "智能表列",
+        "field_type": "text",
+        "property_text": {}
+      },
+      {
+        "before_field_id": "",
+        "field_id": "fHdAVz",
+        "field_title": "resident_id",
+        "field_type": "text",
+        "property_text": {}
+      },
+      {
+        "before_field_id": "",
+        "field_id": "fKsnn5",
+        "field_title": "display_name",
+        "field_type": "text",
+        "property_text": {}
+      },
+      {
+        "before_field_id": "",
+        "field_id": "f4aFTM",
+        "field_title": "identify_note",
+        "field_type": "text",
+        "property_text": {}
+      },
+      {
+        "before_field_id": "",
+        "field_id": "fyIYP6",
+        "field_title": "community",
+        "field_type": "singleSelect",
+        "property_single_select": {
+          "is_multiple": false,
+          "is_quick_add": false,
+          "options": [
+            {
+              "id": "obLEVJ",
+              "style": 1,
+              "text": "东湖"
+            },
+            {
+              "id": "o4tnUC",
+              "style": 2,
+              "text": "东湖A区"
+            },
+            {
+              "id": "oIHwOf",
+              "style": 3,
+              "text": "东湖B区"
+            },
+            {
+              "id": "oQwStU",
+              "style": 4,
+              "text": "东湖周边"
+            }
+          ]
+        }
+      },
+      {
+        "before_field_id": "",
+        "field_id": "fEn4sX",
+        "field_title": "family_stage",
+        "field_type": "select",
+        "property_select": {
+          "is_multiple": false,
+          "is_quick_add": false,
+          "options": [
+            {
+              "id": "ooqN14",
+              "style": 1,
+              "text": "亲子家庭"
+            },
+            {
+              "id": "oWpS7Y",
+              "style": 2,
+              "text": "老人家庭"
+            },
+            {
+              "id": "oPBbf5",
+              "style": 3,
+              "text": "年轻上班族"
+            },
+            {
+              "id": "od9W4z",
+              "style": 4,
+              "text": "普通家庭"
+            }
+          ]
+        }
+      },
+      {
+        "before_field_id": "",
+        "field_id": "f5B0fA",
+        "field_title": "long_term_interests",
+        "field_type": "select",
+        "property_select": {
+          "is_multiple": false,
+          "is_quick_add": false,
+          "options": [
+            {
+              "id": "oXl4hw",
+              "style": 1,
+              "text": "亲子活动"
+            },
+            {
+              "id": "o7O5El",
+              "style": 2,
+              "text": "老人服务"
+            },
+            {
+              "id": "oAoVrR",
+              "style": 3,
+              "text": "买菜生鲜"
+            },
+            {
+              "id": "oM2oAJ",
+              "style": 4,
+              "text": "餐饮美食"
+            },
+            {
+              "id": "oWGePc",
+              "style": 5,
+              "text": "家政服务"
+            },
+            {
+              "id": "o7ttwt",
+              "style": 6,
+              "text": "维修服务"
+            },
+            {
+              "id": "okHdoV",
+              "style": 7,
+              "text": "社区活动"
+            },
+            {
+              "id": "ovxPEm",
+              "style": 8,
+              "text": "健康活动"
+            },
+            {
+              "id": "ohnk6W",
+              "style": 9,
+              "text": "教育学习"
+            },
+            {
+              "id": "oKmQOh",
+              "style": 10,
+              "text": "文化娱乐"
+            },
+            {
+              "id": "oSGDfS",
+              "style": 11,
+              "text": "运动健身"
+            },
+            {
+              "id": "oZxK6k",
+              "style": 12,
+              "text": "交通出行"
+            },
+            {
+              "id": "oFpvXB",
+              "style": 13,
+              "text": "天气提醒"
+            },
+            {
+              "id": "oPoKh9",
+              "style": 14,
+              "text": "公共服务"
+            },
+            {
+              "id": "o8y26O",
+              "style": 15,
+              "text": "便民信息"
+            },
+            {
+              "id": "oz9AHw",
+              "style": 16,
+              "text": "优惠促销"
+            },
+            {
+              "id": "ojGTqf",
+              "style": 17,
+              "text": "其他"
+            }
+          ]
+        }
+      },
+      {
+        "before_field_id": "",
+        "field_id": "fAh4Hu",
+        "field_title": "recent_interests",
+        "field_type": "select",
+        "property_select": {
+          "is_multiple": false,
+          "is_quick_add": false,
+          "options": [
+            {
+              "id": "oLfH7w",
+              "style": 1,
+              "text": "亲子活动"
+            },
+            {
+              "id": "oDlVgu",
+              "style": 2,
+              "text": "老人服务"
+            },
+            {
+              "id": "ocPWqh",
+              "style": 3,
+              "text": "买菜生鲜"
+            },
+            {
+              "id": "osbRmd",
+              "style": 4,
+              "text": "餐饮美食"
+            },
+            {
+              "id": "o84e8t",
+              "style": 5,
+              "text": "家政服务"
+            },
+            {
+              "id": "oq0A7b",
+              "style": 6,
+              "text": "维修服务"
+            },
+            {
+              "id": "oJaLz4",
+              "style": 7,
+              "text": "社区活动"
+            },
+            {
+              "id": "oSdie9",
+              "style": 8,
+              "text": "健康活动"
+            },
+            {
+              "id": "oLSTgq",
+              "style": 9,
+              "text": "教育学习"
+            },
+            {
+              "id": "o5OdKQ",
+              "style": 10,
+              "text": "文化娱乐"
+            },
+            {
+              "id": "osxDVu",
+              "style": 11,
+              "text": "运动健身"
+            },
+            {
+              "id": "o551tq",
+              "style": 12,
+              "text": "交通出行"
+            },
+            {
+              "id": "orZTA8",
+              "style": 13,
+              "text": "天气提醒"
+            },
+            {
+              "id": "oDGWyu",
+              "style": 14,
+              "text": "公共服务"
+            },
+            {
+              "id": "oM4U8P",
+              "style": 15,
+              "text": "便民信息"
+            },
+            {
+              "id": "ozKmH9",
+              "style": 16,
+              "text": "优惠促销"
+            },
+            {
+              "id": "ouGWEm",
+              "style": 17,
+              "text": "其他"
+            }
+          ]
+        }
+      },
+      {
+        "before_field_id": "",
+        "field_id": "fuk4sK",
+        "field_title": "recent_needs",
+        "field_type": "select",
+        "property_select": {
+          "is_multiple": false,
+          "is_quick_add": false,
+          "options": [
+            {
+              "id": "oDtEyh",
+              "style": 1,
+              "text": "亲子活动"
+            },
+            {
+              "id": "oefuBQ",
+              "style": 2,
+              "text": "老人服务"
+            },
+            {
+              "id": "olouMo",
+              "style": 3,
+              "text": "买菜生鲜"
+            },
+            {
+              "id": "oWYDib",
+              "style": 4,
+              "text": "餐饮美食"
+            },
+            {
+              "id": "otWtu5",
+              "style": 5,
+              "text": "家政服务"
+            },
+            {
+              "id": "o8vNVu",
+              "style": 6,
+              "text": "维修服务"
+            },
+            {
+              "id": "oR2Ehi",
+              "style": 7,
+              "text": "社区活动"
+            },
+            {
+              "id": "oHypwm",
+              "style": 8,
+              "text": "健康活动"
+            },
+            {
+              "id": "oaGzlp",
+              "style": 9,
+              "text": "教育学习"
+            },
+            {
+              "id": "oFnd3a",
+              "style": 10,
+              "text": "文化娱乐"
+            },
+            {
+              "id": "oXAJ1Y",
+              "style": 11,
+              "text": "运动健身"
+            },
+            {
+              "id": "oATy0n",
+              "style": 12,
+              "text": "交通出行"
+            },
+            {
+              "id": "oCLh9I",
+              "style": 13,
+              "text": "天气提醒"
+            },
+            {
+              "id": "ofd0cO",
+              "style": 14,
+              "text": "公共服务"
+            },
+            {
+              "id": "ot4xYv",
+              "style": 15,
+              "text": "便民信息"
+            },
+            {
+              "id": "ok1CHi",
+              "style": 16,
+              "text": "优惠促销"
+            },
+            {
+              "id": "oy6Iox",
+              "style": 17,
+              "text": "其他"
+            }
+          ]
+        }
+      },
+      {
+        "before_field_id": "",
+        "field_id": "fJf2SU",
+        "field_title": "avoid_topics",
+        "field_type": "select",
+        "property_select": {
+          "is_multiple": false,
+          "is_quick_add": false,
+          "options": [
+            {
+              "id": "ogiwRS",
+              "style": 1,
+              "text": "亲子活动"
+            },
+            {
+              "id": "odSq9t",
+              "style": 2,
+              "text": "老人服务"
+            },
+            {
+              "id": "oXSNNy",
+              "style": 3,
+              "text": "买菜生鲜"
+            },
+            {
+              "id": "oOcm70",
+              "style": 4,
+              "text": "餐饮美食"
+            },
+            {
+              "id": "owDuf0",
+              "style": 5,
+              "text": "家政服务"
+            },
+            {
+              "id": "oGbtFU",
+              "style": 6,
+              "text": "维修服务"
+            },
+            {
+              "id": "o7muCJ",
+              "style": 7,
+              "text": "社区活动"
+            },
+            {
+              "id": "oYQAkJ",
+              "style": 8,
+              "text": "健康活动"
+            },
+            {
+              "id": "oU3cw1",
+              "style": 9,
+              "text": "教育学习"
+            },
+            {
+              "id": "oFLTpm",
+              "style": 10,
+              "text": "文化娱乐"
+            },
+            {
+              "id": "otJ7aN",
+              "style": 11,
+              "text": "运动健身"
+            },
+            {
+              "id": "oyM8u4",
+              "style": 12,
+              "text": "交通出行"
+            },
+            {
+              "id": "oYJVhX",
+              "style": 13,
+              "text": "天气提醒"
+            },
+            {
+              "id": "o7zbzI",
+              "style": 14,
+              "text": "公共服务"
+            },
+            {
+              "id": "oXDNhi",
+              "style": 15,
+              "text": "便民信息"
+            },
+            {
+              "id": "oXxwmP",
+              "style": 16,
+              "text": "优惠促销"
+            },
+            {
+              "id": "oumpVN",
+              "style": 17,
+              "text": "其他"
+            }
+          ]
+        }
+      },
+      {
+        "before_field_id": "",
+        "field_id": "f94fgd",
+        "field_title": "last_interaction_at",
+        "field_type": "dateTime",
+        "property_date_time": {
+          "auto_fill": false,
+          "format": "yyyy-mm-dd hh:mm"
+        }
+      },
+      {
+        "before_field_id": "",
+        "field_id": "fld2S0",
+        "field_title": "profile_summary",
+        "field_type": "text",
+        "property_text": {}
+      },
+      {
+        "before_field_id": "",
+        "field_id": "fLxsnu",
+        "field_title": "operator_note",
+        "field_type": "text",
+        "property_text": {}
+      },
+      {
+        "before_field_id": "",
+        "field_id": "f9csQh",
+        "field_title": "status",
+        "field_type": "singleSelect",
+        "property_single_select": {
+          "is_multiple": false,
+          "is_quick_add": false,
+          "options": [
+            {
+              "id": "onjZyN",
+              "style": 1,
+              "text": "active"
+            },
+            {
+              "id": "op0WKk",
+              "style": 2,
+              "text": "low_active"
+            },
+            {
+              "id": "oVKOY4",
+              "style": 3,
+              "text": "dormant"
+            },
+            {
+              "id": "os8ozg",
+              "style": 4,
+              "text": "lost"
+            }
+          ]
+        }
+      }
+    ],
+    "has_more": false,
+    "next": 0,
+    "total": 14
+  },
+  "Services": {
+    "fields": [
+      {
+        "before_field_id": "",
+        "field_id": "fabcde",
+        "field_title": "智能表列",
+        "field_type": "text",
+        "property_text": {}
+      },
+      {
+        "before_field_id": "",
+        "field_id": "fQ4fJV",
+        "field_title": "service_id",
+        "field_type": "text",
+        "property_text": {}
+      },
+      {
+        "before_field_id": "",
+        "field_id": "fbAnAY",
+        "field_title": "provider_name",
+        "field_type": "text",
+        "property_text": {}
+      },
+      {
+        "before_field_id": "",
+        "field_id": "f1ly60",
+        "field_title": "service_name",
+        "field_type": "text",
+        "property_text": {}
+      },
+      {
+        "before_field_id": "",
+        "field_id": "f0dSW1",
+        "field_title": "service_category",
+        "field_type": "singleSelect",
+        "property_single_select": {
+          "is_multiple": false,
+          "is_quick_add": false,
+          "options": [
+            {
+              "id": "oOVtcU",
+              "style": 1,
+              "text": "亲子活动"
+            },
+            {
+              "id": "ongoyC",
+              "style": 2,
+              "text": "老人服务"
+            },
+            {
+              "id": "oczJdd",
+              "style": 3,
+              "text": "买菜生鲜"
+            },
+            {
+              "id": "ognaLW",
+              "style": 4,
+              "text": "餐饮美食"
+            },
+            {
+              "id": "oBumNG",
+              "style": 5,
+              "text": "家政服务"
+            },
+            {
+              "id": "oQCQmG",
+              "style": 6,
+              "text": "维修服务"
+            },
+            {
+              "id": "oDJvlX",
+              "style": 7,
+              "text": "社区活动"
+            },
+            {
+              "id": "olytup",
+              "style": 8,
+              "text": "健康活动"
+            },
+            {
+              "id": "obFEdK",
+              "style": 9,
+              "text": "教育学习"
+            },
+            {
+              "id": "oLbwgS",
+              "style": 10,
+              "text": "文化娱乐"
+            },
+            {
+              "id": "oYguIV",
+              "style": 11,
+              "text": "运动健身"
+            },
+            {
+              "id": "o5sAoh",
+              "style": 12,
+              "text": "交通出行"
+            },
+            {
+              "id": "oXHPYj",
+              "style": 13,
+              "text": "天气提醒"
+            },
+            {
+              "id": "oJYYx2",
+              "style": 14,
+              "text": "公共服务"
+            },
+            {
+              "id": "oZBLUh",
+              "style": 15,
+              "text": "便民信息"
+            },
+            {
+              "id": "onSObC",
+              "style": 16,
+              "text": "优惠促销"
+            },
+            {
+              "id": "ojK2nY",
+              "style": 17,
+              "text": "其他"
+            }
+          ]
+        }
+      },
+      {
+        "before_field_id": "",
+        "field_id": "fuJJWg",
+        "field_title": "service_summary",
+        "field_type": "text",
+        "property_text": {}
+      },
+      {
+        "before_field_id": "",
+        "field_id": "f4Z2lP",
+        "field_title": "price_description",
+        "field_type": "text",
+        "property_text": {}
+      },
+      {
+        "before_field_id": "",
+        "field_id": "fsQZfn",
+        "field_title": "service_region",
+        "field_type": "select",
+        "property_select": {
+          "is_multiple": false,
+          "is_quick_add": false,
+          "options": [
+            {
+              "id": "orQevs",
+              "style": 1,
+              "text": "东湖"
+            },
+            {
+              "id": "oNm3ty",
+              "style": 2,
+              "text": "东湖A区"
+            },
+            {
+              "id": "ovh2wF",
+              "style": 3,
+              "text": "东湖B区"
+            },
+            {
+              "id": "otWwam",
+              "style": 4,
+              "text": "东湖周边"
+            }
+          ]
+        }
+      },
+      {
+        "before_field_id": "",
+        "field_id": "famsqR",
+        "field_title": "target_population",
+        "field_type": "select",
+        "property_select": {
+          "is_multiple": false,
+          "is_quick_add": false,
+          "options": [
+            {
+              "id": "oxUBTs",
+              "style": 1,
+              "text": "亲子家庭"
+            },
+            {
+              "id": "oFngPp",
+              "style": 2,
+              "text": "老人家庭"
+            },
+            {
+              "id": "o0RBlz",
+              "style": 3,
+              "text": "年轻上班族"
+            },
+            {
+              "id": "oSxRcT",
+              "style": 4,
+              "text": "普通家庭"
+            },
+            {
+              "id": "oLwOxD",
+              "style": 5,
+              "text": "全部居民"
+            }
+          ]
+        }
+      },
+      {
+        "before_field_id": "",
+        "field_id": "fXTbZb",
+        "field_title": "contact",
+        "field_type": "text",
+        "property_text": {}
+      },
+      {
+        "before_field_id": "",
+        "field_id": "fCnwjG",
+        "field_title": "status",
+        "field_type": "singleSelect",
+        "property_single_select": {
+          "is_multiple": false,
+          "is_quick_add": false,
+          "options": [
+            {
+              "id": "oqVAyy",
+              "style": 1,
+              "text": "active"
+            },
+            {
+              "id": "oKk0M8",
+              "style": 2,
+              "text": "paused"
+            },
+            {
+              "id": "objPwB",
+              "style": 3,
+              "text": "unverified"
+            }
+          ]
+        }
+      },
+      {
+        "before_field_id": "",
+        "field_id": "frMCPM",
+        "field_title": "operator_note",
+        "field_type": "text",
+        "property_text": {}
+      }
+    ],
+    "has_more": false,
+    "next": 0,
+    "total": 12
+  },
+  "Contents": {
+    "fields": [
+      {
+        "before_field_id": "",
+        "field_id": "fabcde",
+        "field_title": "智能表列",
+        "field_type": "text",
+        "property_text": {}
+      },
+      {
+        "before_field_id": "",
+        "field_id": "fcnFnq",
+        "field_title": "content_id",
+        "field_type": "text",
+        "property_text": {}
+      },
+      {
+        "before_field_id": "",
+        "field_id": "ff6I7J",
+        "field_title": "title",
+        "field_type": "text",
+        "property_text": {}
+      },
+      {
+        "before_field_id": "",
+        "field_id": "fQQKSv",
+        "field_title": "source",
+        "field_type": "text",
+        "property_text": {}
+      },
+      {
+        "before_field_id": "",
+        "field_id": "fpoy5P",
+        "field_title": "source_url",
+        "field_type": "text",
+        "property_text": {}
+      },
+      {
+        "before_field_id": "",
+        "field_id": "fIDoU8",
+        "field_title": "summary",
+        "field_type": "text",
+        "property_text": {}
+      },
+      {
+        "before_field_id": "",
+        "field_id": "fiUqXw",
+        "field_title": "content_type",
+        "field_type": "singleSelect",
+        "property_single_select": {
+          "is_multiple": false,
+          "is_quick_add": false,
+          "options": [
+            {
+              "id": "o3j93K",
+              "style": 1,
+              "text": "亲子活动"
+            },
+            {
+              "id": "oG9kVc",
+              "style": 2,
+              "text": "老人服务"
+            },
+            {
+              "id": "o2pjRO",
+              "style": 3,
+              "text": "买菜生鲜"
+            },
+            {
+              "id": "oU2cgI",
+              "style": 4,
+              "text": "餐饮美食"
+            },
+            {
+              "id": "oGhgzP",
+              "style": 5,
+              "text": "家政服务"
+            },
+            {
+              "id": "op5JbW",
+              "style": 6,
+              "text": "维修服务"
+            },
+            {
+              "id": "oprhS1",
+              "style": 7,
+              "text": "社区活动"
+            },
+            {
+              "id": "o6Nu05",
+              "style": 8,
+              "text": "健康活动"
+            },
+            {
+              "id": "oSYzh2",
+              "style": 9,
+              "text": "教育学习"
+            },
+            {
+              "id": "oJxLk0",
+              "style": 10,
+              "text": "文化娱乐"
+            },
+            {
+              "id": "obdhus",
+              "style": 11,
+              "text": "运动健身"
+            },
+            {
+              "id": "oI2r1J",
+              "style": 12,
+              "text": "交通出行"
+            },
+            {
+              "id": "oTjqap",
+              "style": 13,
+              "text": "天气提醒"
+            },
+            {
+              "id": "ouaGrC",
+              "style": 14,
+              "text": "公共服务"
+            },
+            {
+              "id": "olSTw7",
+              "style": 15,
+              "text": "便民信息"
+            },
+            {
+              "id": "ojoj0K",
+              "style": 16,
+              "text": "优惠促销"
+            },
+            {
+              "id": "ouDKpf",
+              "style": 17,
+              "text": "其他"
+            }
+          ]
+        }
+      },
+      {
+        "before_field_id": "",
+        "field_id": "fh1jhf",
+        "field_title": "topic_tags",
+        "field_type": "select",
+        "property_select": {
+          "is_multiple": false,
+          "is_quick_add": false,
+          "options": [
+            {
+              "id": "o2GMkI",
+              "style": 1,
+              "text": "亲子活动"
+            },
+            {
+              "id": "o6NjTB",
+              "style": 2,
+              "text": "老人服务"
+            },
+            {
+              "id": "omApPm",
+              "style": 3,
+              "text": "买菜生鲜"
+            },
+            {
+              "id": "o5DSm0",
+              "style": 4,
+              "text": "餐饮美食"
+            },
+            {
+              "id": "oOBpiM",
+              "style": 5,
+              "text": "家政服务"
+            },
+            {
+              "id": "oQWdUT",
+              "style": 6,
+              "text": "维修服务"
+            },
+            {
+              "id": "oDTQHX",
+              "style": 7,
+              "text": "社区活动"
+            },
+            {
+              "id": "oDSWDD",
+              "style": 8,
+              "text": "健康活动"
+            },
+            {
+              "id": "ovn984",
+              "style": 9,
+              "text": "教育学习"
+            },
+            {
+              "id": "odyHuu",
+              "style": 10,
+              "text": "文化娱乐"
+            },
+            {
+              "id": "ojTU4i",
+              "style": 11,
+              "text": "运动健身"
+            },
+            {
+              "id": "opMyMF",
+              "style": 12,
+              "text": "交通出行"
+            },
+            {
+              "id": "oDeAO2",
+              "style": 13,
+              "text": "天气提醒"
+            },
+            {
+              "id": "ot9cRM",
+              "style": 14,
+              "text": "公共服务"
+            },
+            {
+              "id": "o64F1l",
+              "style": 15,
+              "text": "便民信息"
+            },
+            {
+              "id": "oQfeZh",
+              "style": 16,
+              "text": "优惠促销"
+            },
+            {
+              "id": "oIvp3B",
+              "style": 17,
+              "text": "其他"
+            }
+          ]
+        }
+      },
+      {
+        "before_field_id": "",
+        "field_id": "f7rdFR",
+        "field_title": "target_population",
+        "field_type": "select",
+        "property_select": {
+          "is_multiple": false,
+          "is_quick_add": false,
+          "options": [
+            {
+              "id": "oDaYEW",
+              "style": 1,
+              "text": "亲子家庭"
+            },
+            {
+              "id": "o163fJ",
+              "style": 2,
+              "text": "老人家庭"
+            },
+            {
+              "id": "oBxtTW",
+              "style": 3,
+              "text": "年轻上班族"
+            },
+            {
+              "id": "oXkniD",
+              "style": 4,
+              "text": "普通家庭"
+            },
+            {
+              "id": "olm4Xs",
+              "style": 5,
+              "text": "全部居民"
+            }
+          ]
+        }
+      },
+      {
+        "before_field_id": "",
+        "field_id": "fNsEPj",
+        "field_title": "region",
+        "field_type": "singleSelect",
+        "property_single_select": {
+          "is_multiple": false,
+          "is_quick_add": false,
+          "options": [
+            {
+              "id": "o740WE",
+              "style": 1,
+              "text": "东湖"
+            },
+            {
+              "id": "oqnVb1",
+              "style": 2,
+              "text": "东湖A区"
+            },
+            {
+              "id": "o1QUwV",
+              "style": 3,
+              "text": "东湖B区"
+            },
+            {
+              "id": "oeWjVY",
+              "style": 4,
+              "text": "东湖周边"
+            }
+          ]
+        }
+      },
+      {
+        "before_field_id": "",
+        "field_id": "frimoJ",
+        "field_title": "publish_time",
+        "field_type": "dateTime",
+        "property_date_time": {
+          "auto_fill": false,
+          "format": "yyyy-mm-dd hh:mm"
+        }
+      },
+      {
+        "before_field_id": "",
+        "field_id": "fNZ5g3",
+        "field_title": "event_time",
+        "field_type": "dateTime",
+        "property_date_time": {
+          "auto_fill": false,
+          "format": "yyyy-mm-dd hh:mm"
+        }
+      },
+      {
+        "before_field_id": "",
+        "field_id": "fAoGhB",
+        "field_title": "expire_at",
+        "field_type": "dateTime",
+        "property_date_time": {
+          "auto_fill": false,
+          "format": "yyyy-mm-dd hh:mm"
+        }
+      },
+      {
+        "before_field_id": "",
+        "field_id": "fUm6LN",
+        "field_title": "commercial_level",
+        "field_type": "singleSelect",
+        "property_single_select": {
+          "is_multiple": false,
+          "is_quick_add": false,
+          "options": [
+            {
+              "id": "o7Jg7x",
+              "style": 1,
+              "text": "non_commercial"
+            },
+            {
+              "id": "ognNI8",
+              "style": 2,
+              "text": "weak_commercial"
+            },
+            {
+              "id": "ouk3Qa",
+              "style": 3,
+              "text": "service"
+            },
+            {
+              "id": "oTpCQZ",
+              "style": 4,
+              "text": "promotion"
+            }
+          ]
+        }
+      },
+      {
+        "before_field_id": "",
+        "field_id": "ff2v2n",
+        "field_title": "risk_level",
+        "field_type": "singleSelect",
+        "property_single_select": {
+          "is_multiple": false,
+          "is_quick_add": false,
+          "options": [
+            {
+              "id": "owPkR1",
+              "style": 1,
+              "text": "low"
+            },
+            {
+              "id": "oofQGh",
+              "style": 2,
+              "text": "medium"
+            },
+            {
+              "id": "oNEhX8",
+              "style": 3,
+              "text": "high"
+            }
+          ]
+        }
+      },
+      {
+        "before_field_id": "",
+        "field_id": "fvt6lJ",
+        "field_title": "status",
+        "field_type": "singleSelect",
+        "property_single_select": {
+          "is_multiple": false,
+          "is_quick_add": false,
+          "options": [
+            {
+              "id": "ooajS7",
+              "style": 1,
+              "text": "draft"
+            },
+            {
+              "id": "os3ore",
+              "style": 2,
+              "text": "active"
+            },
+            {
+              "id": "o7lTaU",
+              "style": 3,
+              "text": "expired"
+            },
+            {
+              "id": "oJADrH",
+              "style": 4,
+              "text": "rejected"
+            }
+          ]
+        }
+      },
+      {
+        "before_field_id": "",
+        "field_id": "fErhUi",
+        "field_title": "operator_note",
+        "field_type": "text",
+        "property_text": {}
+      }
+    ],
+    "has_more": false,
+    "next": 0,
+    "total": 17
+  },
+  "Interactions": {
+    "fields": [
+      {
+        "before_field_id": "",
+        "field_id": "fabcde",
+        "field_title": "智能表列",
+        "field_type": "text",
+        "property_text": {}
+      },
+      {
+        "before_field_id": "",
+        "field_id": "f4MK4n",
+        "field_title": "interaction_id",
+        "field_type": "text",
+        "property_text": {}
+      },
+      {
+        "before_field_id": "",
+        "field_id": "fTEUCC",
+        "field_title": "resident_id",
+        "field_type": "text",
+        "property_text": {}
+      },
+      {
+        "before_field_id": "",
+        "field_id": "ff53Ip",
+        "field_title": "interaction_time",
+        "field_type": "dateTime",
+        "property_date_time": {
+          "auto_fill": false,
+          "format": "yyyy-mm-dd hh:mm"
+        }
+      },
+      {
+        "before_field_id": "",
+        "field_id": "f7EZua",
+        "field_title": "interaction_type",
+        "field_type": "singleSelect",
+        "property_single_select": {
+          "is_multiple": false,
+          "is_quick_add": false,
+          "options": [
+            {
+              "id": "oJrP9H",
+              "style": 1,
+              "text": "content_reply"
+            },
+            {
+              "id": "oEJkic",
+              "style": 2,
+              "text": "active_inquiry"
+            },
+            {
+              "id": "o8pcQV",
+              "style": 3,
+              "text": "service_inquiry"
+            },
+            {
+              "id": "oD1IfP",
+              "style": 4,
+              "text": "service_request"
+            },
+            {
+              "id": "oia2z2",
+              "style": 5,
+              "text": "activity_inquiry"
+            },
+            {
+              "id": "ojnrqA",
+              "style": 6,
+              "text": "activity_signup"
+            },
+            {
+              "id": "oHnYh4",
+              "style": 7,
+              "text": "positive_feedback"
+            },
+            {
+              "id": "osu0Ie",
+              "style": 8,
+              "text": "negative_feedback"
+            },
+            {
+              "id": "oY6CI0",
+              "style": 9,
+              "text": "manual_followup"
+            },
+            {
+              "id": "o1pkNS",
+              "style": 10,
+              "text": "other"
+            }
+          ]
+        }
+      },
+      {
+        "before_field_id": "",
+        "field_id": "fnn9W4",
+        "field_title": "related_type",
+        "field_type": "singleSelect",
+        "property_single_select": {
+          "is_multiple": false,
+          "is_quick_add": false,
+          "options": [
+            {
+              "id": "oYKepW",
+              "style": 1,
+              "text": "content"
+            },
+            {
+              "id": "od7Xv7",
+              "style": 2,
+              "text": "service"
+            },
+            {
+              "id": "oWa7m3",
+              "style": 3,
+              "text": "need"
+            },
+            {
+              "id": "ocgihi",
+              "style": 4,
+              "text": "activity"
+            }
+          ]
+        }
+      },
+      {
+        "before_field_id": "",
+        "field_id": "fLLEvG",
+        "field_title": "related_id",
+        "field_type": "text",
+        "property_text": {}
+      },
+      {
+        "before_field_id": "",
+        "field_id": "fiB3zN",
+        "field_title": "raw_note",
+        "field_type": "text",
+        "property_text": {}
+      },
+      {
+        "before_field_id": "",
+        "field_id": "fmxpo6",
+        "field_title": "ai_summary",
+        "field_type": "text",
+        "property_text": {}
+      },
+      {
+        "before_field_id": "",
+        "field_id": "fSbItN",
+        "field_title": "topic_tags",
+        "field_type": "select",
+        "property_select": {
+          "is_multiple": false,
+          "is_quick_add": false,
+          "options": [
+            {
+              "id": "or2aS9",
+              "style": 1,
+              "text": "亲子活动"
+            },
+            {
+              "id": "ovUbbJ",
+              "style": 2,
+              "text": "老人服务"
+            },
+            {
+              "id": "o4vzv3",
+              "style": 3,
+              "text": "买菜生鲜"
+            },
+            {
+              "id": "oxAwfz",
+              "style": 4,
+              "text": "餐饮美食"
+            },
+            {
+              "id": "osc0E8",
+              "style": 5,
+              "text": "家政服务"
+            },
+            {
+              "id": "o4otia",
+              "style": 6,
+              "text": "维修服务"
+            },
+            {
+              "id": "oHxDcT",
+              "style": 7,
+              "text": "社区活动"
+            },
+            {
+              "id": "ouC4Nk",
+              "style": 8,
+              "text": "健康活动"
+            },
+            {
+              "id": "oLqAkL",
+              "style": 9,
+              "text": "教育学习"
+            },
+            {
+              "id": "og9pWl",
+              "style": 10,
+              "text": "文化娱乐"
+            },
+            {
+              "id": "o0Uuk7",
+              "style": 11,
+              "text": "运动健身"
+            },
+            {
+              "id": "omYbJz",
+              "style": 12,
+              "text": "交通出行"
+            },
+            {
+              "id": "othYYc",
+              "style": 13,
+              "text": "天气提醒"
+            },
+            {
+              "id": "ow2L8u",
+              "style": 14,
+              "text": "公共服务"
+            },
+            {
+              "id": "o5Yv5r",
+              "style": 15,
+              "text": "便民信息"
+            },
+            {
+              "id": "otn2oj",
+              "style": 16,
+              "text": "优惠促销"
+            },
+            {
+              "id": "owpQc3",
+              "style": 17,
+              "text": "其他"
+            }
+          ]
+        }
+      },
+      {
+        "before_field_id": "",
+        "field_id": "fPM9ib",
+        "field_title": "sentiment",
+        "field_type": "singleSelect",
+        "property_single_select": {
+          "is_multiple": false,
+          "is_quick_add": false,
+          "options": [
+            {
+              "id": "oBMETA",
+              "style": 1,
+              "text": "positive"
+            },
+            {
+              "id": "og7pms",
+              "style": 2,
+              "text": "neutral"
+            },
+            {
+              "id": "oR5Uwp",
+              "style": 3,
+              "text": "negative"
+            }
+          ]
+        }
+      },
+      {
+        "before_field_id": "",
+        "field_id": "fowGgN",
+        "field_title": "created_by",
+        "field_type": "text",
+        "property_text": {}
+      }
+    ],
+    "has_more": false,
+    "next": 0,
+    "total": 12
+  },
+  "Needs": {
+    "fields": [
+      {
+        "before_field_id": "",
+        "field_id": "fabcde",
+        "field_title": "智能表列",
+        "field_type": "text",
+        "property_text": {}
+      },
+      {
+        "before_field_id": "",
+        "field_id": "fTlODu",
+        "field_title": "need_id",
+        "field_type": "text",
+        "property_text": {}
+      },
+      {
+        "before_field_id": "",
+        "field_id": "fCL28k",
+        "field_title": "resident_id",
+        "field_type": "text",
+        "property_text": {}
+      },
+      {
+        "before_field_id": "",
+        "field_id": "fROZxM",
+        "field_title": "need_category",
+        "field_type": "singleSelect",
+        "property_single_select": {
+          "is_multiple": false,
+          "is_quick_add": false,
+          "options": [
+            {
+              "id": "oiv1AD",
+              "style": 1,
+              "text": "亲子活动"
+            },
+            {
+              "id": "oTtkfk",
+              "style": 2,
+              "text": "老人服务"
+            },
+            {
+              "id": "oN3qQz",
+              "style": 3,
+              "text": "买菜生鲜"
+            },
+            {
+              "id": "otWauE",
+              "style": 4,
+              "text": "餐饮美食"
+            },
+            {
+              "id": "oD87VO",
+              "style": 5,
+              "text": "家政服务"
+            },
+            {
+              "id": "odOMqB",
+              "style": 6,
+              "text": "维修服务"
+            },
+            {
+              "id": "oK8JPI",
+              "style": 7,
+              "text": "社区活动"
+            },
+            {
+              "id": "o3L4wT",
+              "style": 8,
+              "text": "健康活动"
+            },
+            {
+              "id": "oFosrf",
+              "style": 9,
+              "text": "教育学习"
+            },
+            {
+              "id": "oXnTj9",
+              "style": 10,
+              "text": "文化娱乐"
+            },
+            {
+              "id": "obQWjv",
+              "style": 11,
+              "text": "运动健身"
+            },
+            {
+              "id": "osacmV",
+              "style": 12,
+              "text": "交通出行"
+            },
+            {
+              "id": "oshHQS",
+              "style": 13,
+              "text": "天气提醒"
+            },
+            {
+              "id": "ojj9vQ",
+              "style": 14,
+              "text": "公共服务"
+            },
+            {
+              "id": "o6DQMC",
+              "style": 15,
+              "text": "便民信息"
+            },
+            {
+              "id": "oH4wO8",
+              "style": 16,
+              "text": "优惠促销"
+            },
+            {
+              "id": "ohqQs0",
+              "style": 17,
+              "text": "其他"
+            }
+          ]
+        }
+      },
+      {
+        "before_field_id": "",
+        "field_id": "fADfOm",
+        "field_title": "need_summary",
+        "field_type": "text",
+        "property_text": {}
+      },
+      {
+        "before_field_id": "",
+        "field_id": "fsVr1X",
+        "field_title": "urgency",
+        "field_type": "singleSelect",
+        "property_single_select": {
+          "is_multiple": false,
+          "is_quick_add": false,
+          "options": [
+            {
+              "id": "oieLfX",
+              "style": 1,
+              "text": "normal"
+            },
+            {
+              "id": "o3A3Ra",
+              "style": 2,
+              "text": "high"
+            }
+          ]
+        }
+      },
+      {
+        "before_field_id": "",
+        "field_id": "fXDOSB",
+        "field_title": "status",
+        "field_type": "singleSelect",
+        "property_single_select": {
+          "is_multiple": false,
+          "is_quick_add": false,
+          "options": [
+            {
+              "id": "oCdsXM",
+              "style": 1,
+              "text": "new"
+            },
+            {
+              "id": "oqHjNi",
+              "style": 2,
+              "text": "following"
+            },
+            {
+              "id": "oKkRNR",
+              "style": 3,
+              "text": "resolved"
+            },
+            {
+              "id": "oQ2WJD",
+              "style": 4,
+              "text": "unable_to_resolve"
+            }
+          ]
+        }
+      },
+      {
+        "before_field_id": "",
+        "field_id": "fVoBoP",
+        "field_title": "matched_service_id",
+        "field_type": "text",
+        "property_text": {}
+      },
+      {
+        "before_field_id": "",
+        "field_id": "f7IZiB",
+        "field_title": "followup_note",
+        "field_type": "text",
+        "property_text": {}
+      },
+      {
+        "before_field_id": "",
+        "field_id": "fuvyzq",
+        "field_title": "created_at",
+        "field_type": "dateTime",
+        "property_date_time": {
+          "auto_fill": false,
+          "format": "yyyy-mm-dd hh:mm"
+        }
+      },
+      {
+        "before_field_id": "",
+        "field_id": "fM9WAI",
+        "field_title": "updated_at",
+        "field_type": "dateTime",
+        "property_date_time": {
+          "auto_fill": false,
+          "format": "yyyy-mm-dd hh:mm"
+        }
+      }
+    ],
+    "has_more": false,
+    "next": 0,
+    "total": 11
+  },
+  "Push_Plans": {
+    "fields": [
+      {
+        "before_field_id": "",
+        "field_id": "fabcde",
+        "field_title": "智能表列",
+        "field_type": "text",
+        "property_text": {}
+      },
+      {
+        "before_field_id": "",
+        "field_id": "fi1KhE",
+        "field_title": "push_id",
+        "field_type": "text",
+        "property_text": {}
+      },
+      {
+        "before_field_id": "",
+        "field_id": "f0JRU8",
+        "field_title": "push_date",
+        "field_type": "dateTime",
+        "property_date_time": {
+          "auto_fill": false,
+          "format": "yyyy-mm-dd"
+        }
+      },
+      {
+        "before_field_id": "",
+        "field_id": "f9FntJ",
+        "field_title": "content_id",
+        "field_type": "text",
+        "property_text": {}
+      },
+      {
+        "before_field_id": "",
+        "field_id": "fn50kY",
+        "field_title": "target_residents",
+        "field_type": "text",
+        "property_text": {}
+      },
+      {
+        "before_field_id": "",
+        "field_id": "fF8ZIH",
+        "field_title": "target_segment",
+        "field_type": "text",
+        "property_text": {}
+      },
+      {
+        "before_field_id": "",
+        "field_id": "foZW8u",
+        "field_title": "recommend_reason",
+        "field_type": "text",
+        "property_text": {}
+      },
+      {
+        "before_field_id": "",
+        "field_id": "fAFtwE",
+        "field_title": "message_text",
+        "field_type": "text",
+        "property_text": {}
+      },
+      {
+        "before_field_id": "",
+        "field_id": "flkz3z",
+        "field_title": "no_send_residents",
+        "field_type": "text",
+        "property_text": {}
+      },
+      {
+        "before_field_id": "",
+        "field_id": "ffPwg7",
+        "field_title": "no_send_reason",
+        "field_type": "text",
+        "property_text": {}
+      },
+      {
+        "before_field_id": "",
+        "field_id": "fbExqh",
+        "field_title": "hold_residents",
+        "field_type": "text",
+        "property_text": {}
+      },
+      {
+        "before_field_id": "",
+        "field_id": "fs5KFn",
+        "field_title": "hold_reason",
+        "field_type": "text",
+        "property_text": {}
+      },
+      {
+        "before_field_id": "",
+        "field_id": "f10vBX",
+        "field_title": "review_status",
+        "field_type": "singleSelect",
+        "property_single_select": {
+          "is_multiple": false,
+          "is_quick_add": false,
+          "options": [
+            {
+              "id": "odi8Fc",
+              "style": 1,
+              "text": "draft"
+            },
+            {
+              "id": "o69NQJ",
+              "style": 2,
+              "text": "approved"
+            },
+            {
+              "id": "okV7ir",
+              "style": 3,
+              "text": "rejected"
+            }
+          ]
+        }
+      },
+      {
+        "before_field_id": "",
+        "field_id": "f97Y3Q",
+        "field_title": "send_status",
+        "field_type": "singleSelect",
+        "property_single_select": {
+          "is_multiple": false,
+          "is_quick_add": false,
+          "options": [
+            {
+              "id": "odtJCM",
+              "style": 1,
+              "text": "not_sent"
+            },
+            {
+              "id": "ozgsN1",
+              "style": 2,
+              "text": "sent"
+            },
+            {
+              "id": "o6ol3q",
+              "style": 3,
+              "text": "cancelled"
+            }
+          ]
+        }
+      },
+      {
+        "before_field_id": "",
+        "field_id": "fGTg4y",
+        "field_title": "operator_note",
+        "field_type": "text",
+        "property_text": {}
+      }
+    ],
+    "has_more": false,
+    "next": 0,
+    "total": 15
+  }
+}

@@ -69,7 +69,7 @@ def load_options(path: str) -> dict:
     def options_of(field_obj) -> dict[str, str] | None:
         if isinstance(field_obj, dict) and all(isinstance(v, str) for v in field_obj.values()):
             return dict(field_obj)                      # 已是 {text: option_id}
-        for key in ("property_select", "select", "property"):
+        for key in ("property_select", "property_single_select", "select", "property"):
             prop = field_obj.get(key) if isinstance(field_obj, dict) else None
             if isinstance(prop, dict) and isinstance(prop.get("options"), list):
                 out = {}
@@ -111,9 +111,18 @@ def build_fields(table: str) -> dict:
     for name in SCHEMA[table]:
         kind = FIELD_KINDS[table][name]
         spec: dict = {"field_title": name, "field_type": kind}
+        if kind == DATETIME:
+            # 2026-09-21 Build Phase 1 实测：不带 property_date_time 的 dateTime
+            # 字段会被拒绝（22018），必须至少给 format。push_date 按日期显示。
+            fmt = "yyyy-mm-dd" if (table, name) in DATE_ONLY else "yyyy-mm-dd hh:mm"
+            spec["property_date_time"] = {"format": fmt}
         opts = field_options(table, name)
         if opts is not None:
-            spec["property_select"] = {"options": [{"text": o} for o in opts]}
+            # 2026-09-21 Build Phase 1 实测：singleSelect 的选项必须放在
+            # property_single_select 里，用 property_select 会被整批拒绝（22020），
+            # 一个 mutation 失败时同批其它字段也不会创建。
+            prop = "property_single_select" if kind == SINGLE else "property_select"
+            spec[prop] = {"options": [{"text": o} for o in opts]}
         fields.append(spec)
     return {"table": table, "fields": fields}
 
@@ -148,9 +157,16 @@ def build_records(ds: Dataset, table: str, options: dict) -> tuple[list, list[st
                         problems.append(
                             f"{table}.{rid}.{name} 的取值「{it}」不在该字段已注册的选项里。"
                             f"直接写会静默新建选项（T0 B3），已拒绝生成。")
-                values.append({"field": name, VALUE_KEY[kind]: {"items": items}})
+                # Build Phase 1 实测：option_value.items 必须是 [{text}] 对象，
+                # 纯字符串数组会被 MCP 参数校验直接拒绝。
+                values.append({"field": name,
+                               VALUE_KEY[kind]: {"items": [{"text": it} for it in items]}})
             else:
-                values.append({"field": name, VALUE_KEY["text"]: raw})
+                # Build Phase 1 实测：text_value 必须是 {items:[{text,type:"text"}]}，
+                # 纯字符串会被 MCP 参数校验直接拒绝（T0 A2 的静默空写是 field_values
+                # 整体形状错误；字段级纯字符串则连校验都过不了）。
+                values.append({"field": name,
+                               VALUE_KEY["text"]: {"items": [{"text": raw, "type": "text"}]}})
         records.append({"field_values": values})
     return records, problems
 
@@ -258,7 +274,12 @@ def verify(ds: Dataset, table: str, dump_path: str) -> list[str]:
 def _read_value(item):
     if not isinstance(item, dict):
         return item
-    for k in ("text_value", "string_value", "number_value"):
+    tv = item.get("text_value")
+    if isinstance(tv, dict):
+        # 真实 list_records 返回 text_value:{items:[{text,type:"text"}]}，
+        # 展平回纯文本再比对。
+        return "".join(str(i.get("text", "")) for i in tv.get("items", []) if isinstance(i, dict))
+    for k in ("string_value", "number_value"):
         if k in item and item[k] not in (None, ""):
             return item[k]
     ov = item.get("option_value")

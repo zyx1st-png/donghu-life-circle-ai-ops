@@ -45,7 +45,10 @@ def make_snapshot() -> dict:
         for i, (name, kind) in enumerate(cols.items()):
             f = {"field_id": f"fld{i:03d}", "field_title": name, "field_type": kind}
             if kind in (SELECT, SINGLE):
-                f["property_select"] = {"options": [
+                # 与真实 list_fields 返回一致：singleSelect 的选项在
+                # property_single_select 里（Build Phase 1 实测 22020）。
+                prop = "property_single_select" if kind == SINGLE else "property_select"
+                f[prop] = {"options": [
                     {"id": f"opt{j:03d}", "text": o}
                     for j, o in enumerate(field_options(table, name))]}
             fields.append(f)
@@ -61,8 +64,11 @@ def as_dump(records: list) -> dict:
         for v in r["field_values"]:
             if "option_value" in v:
                 fv.append({"field": v["field"], "option_value": {
-                    "items": [{"id": f"opt{i}", "text": t}
-                              for i, t in enumerate(v["option_value"]["items"])]}})
+                    "items": [{"id": f"opt{i}", "text": o["text"]}
+                              for i, o in enumerate(v["option_value"]["items"])]}})
+            elif "text_value" in v:
+                fv.append({"field": v["field"], "text_value": {
+                    "items": [dict(t) for t in v["text_value"]["items"]]}})
             else:
                 fv.append(dict(v))
         out.append({"record_id": f"rec{len(out)}", "field_values": fv})
@@ -87,33 +93,37 @@ def _():
         for f in build_fields(table)["fields"]:
             kind = FIELD_KINDS[table][f["field_title"]]
             if kind in (SELECT, SINGLE):
-                got = [o["text"] for o in f["property_select"]["options"]]
+                prop = "property_single_select" if kind == SINGLE else "property_select"
+                got = [o["text"] for o in f[prop]["options"]]
                 want = field_options(table, f["field_title"])
                 assert got == want, f"{table}.{f['field_title']} 选项不一致"
             else:
-                assert "property_select" not in f, f"{table}.{f['field_title']} 不该有选项"
+                assert "property_select" not in f and "property_single_select" not in f, \
+                    f"{table}.{f['field_title']} 不该有选项"
 
 
 @case("多选值被拆成 items 数组，而不是留成带分号的整串（T0 B6）")
 def _():
     recs, problems = build_records(DS, "Residents", SNAP)
     assert not problems, problems
-    r003 = next(r for r in recs
-                if any(v.get("text_value") == "R003" for v in r["field_values"]))
-    r004 = next(r for r in recs
-                if any(v.get("text_value") == "R004" for v in r["field_values"]))
+    rid_of = lambda r: next(v["text_value"]["items"][0]["text"]
+                            for v in r["field_values"] if v["field"] == "resident_id")
+    r003 = next(r for r in recs if rid_of(r) == "R003")
+    r004 = next(r for r in recs if rid_of(r) == "R004")
     lti = next(v for v in r004["field_values"] if v["field"] == "long_term_interests")
-    assert lti["option_value"]["items"] == ["买菜生鲜", "社区活动"], lti
+    assert [o["text"] for o in lti["option_value"]["items"]] == ["买菜生鲜", "社区活动"], lti
     for v in r003["field_values"] + r004["field_values"]:
         for item in v.get("option_value", {}).get("items", []):
-            assert ";" not in item and "；" not in item, f"选项里混进了分号: {item}"
+            assert ";" not in item["text"] and "；" not in item["text"], \
+                f"选项里混进了分号: {item}"
 
 
 @case("dateTime 写成东八区毫秒时间戳，且与 T0 B5 实测值一致")
 def _():
     recs, _ = build_records(DS, "Contents", SNAP)
     c003 = next(r for r in recs
-                if any(v.get("text_value") == "C003" for v in r["field_values"]))
+                if any(v.get("text_value", {}).get("items", [{}])[0].get("text") == "C003"
+                       for v in r["field_values"]))
     ev = next(v for v in c003["field_values"] if v["field"] == "event_time")
     assert ev["string_value"] == "1790386200000", ev      # C003 event_time = 2026-09-26 09:30
     assert to_cst_millis("2026-09-26 09:30") == 1790386200000
@@ -236,7 +246,7 @@ def _():
     recs, _ = build_records(DS, "Needs", SNAP)
     dump = as_dump(recs)
     dump["records"].append({"record_id": "recX", "field_values": [
-        {"field": "need_id", "text_value": "N099"}]})
+        {"field": "need_id", "text_value": {"items": [{"text": "N099", "type": "text"}]}}]})
     findings = verify(DS, "Needs", write_tmp(dump))
     assert any("[多余]" in f and "N099" in f for f in findings), findings
 
