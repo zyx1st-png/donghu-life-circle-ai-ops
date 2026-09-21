@@ -37,7 +37,11 @@ from donghu_demo import (  # noqa: E402
 )
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-DEFAULT_OPTIONS = os.path.join(ROOT, "demo", "smartsheet-options.json")
+
+# 这份文件是 Build Phase 1 当时的 baseline snapshot，不是线上实时状态。
+# 之后 Agent 每写一次多选字段都可能改动线上，而它不会跟着变。
+BASELINE_OPTIONS = os.path.join(ROOT, "demo", "smartsheet-options.json")
+DEFAULT_OPTIONS = BASELINE_OPTIONS
 
 # T0 A2 实测：field_values 的形状是 [{field, text_value | option_value | string_value}]，
 # 其中 field 用**字段标题**匹配（C2）。文本用 text_value、多选用 option_value 已实测确认。
@@ -172,6 +176,33 @@ def build_records(ds: Dataset, table: str, options: dict) -> tuple[list, list[st
 
 
 # ---------------------------------------------------------------- 词表漂移体检
+
+def field_census(path: str) -> list[tuple[str, int, int, list[str]]]:
+    """每张表的业务字段数 / 物理字段数 / 平台自带字段。
+
+    直接读原始快照，不复用选项映射——物理字段清点和选项校验是两件事，
+    共用一个结构会让内部键漏进选项映射里。
+
+    真实 SmartSheet 每张表都会多一个平台默认的「智能表列」。
+    报字段数时混着说，会让人以为建漏了或建多了。
+    """
+    with open(path, encoding="utf-8") as fh:
+        raw = json.load(fh)
+    out = []
+    for table, cols in SCHEMA.items():
+        payload = raw.get(table) or {}
+        fields = payload.get("fields", payload) if isinstance(payload, dict) else payload
+        if isinstance(fields, dict):
+            names = list(fields)
+        elif isinstance(fields, list):
+            names = [f.get("field_title") or f.get("title") or f.get("name")
+                     for f in fields if isinstance(f, dict)]
+        else:
+            names = []
+        platform = [n for n in names if n and n not in cols]
+        out.append((table, len(cols), len(names) or len(cols), platform))
+    return out
+
 
 def check_options(options: dict) -> list[str]:
     """把线上真实选项集合和仓库冻结词表逐字段比对。
@@ -308,6 +339,8 @@ def main():
 
     pc = sub.add_parser("check-options", help="线上选项集合 vs 冻结词表")
     pc.add_argument("--options", default=DEFAULT_OPTIONS)
+    pc.add_argument("--require-fresh", action="store_true",
+                    help="彩排 / Agent 测试前用：拒绝拿仓库里的 Build baseline 冒充线上实时状态")
 
     pv = sub.add_parser("verify", help="list_records 读回结果 vs seed")
     pv.add_argument("--table", required=True)
@@ -340,9 +373,27 @@ def main():
         if not os.path.exists(a.options):
             print(f"✗ 找不到选项快照：{a.options}")
             return 1
-        findings = check_options(load_options(a.options))
+        is_baseline = os.path.abspath(a.options) == os.path.abspath(BASELINE_OPTIONS)
+        if is_baseline and a.require_fresh:
+            print("✗ 拒绝执行：这是仓库里的 Build baseline snapshot，不是线上实时状态。\n"
+                  "  它记录的是建表那一刻的样子，之后 Agent 每写一次多选字段都可能改动线上，\n"
+                  "  而这份文件不会跟着变。拿它宣布『线上没有漂移』等于用上个月的体检报告\n"
+                  "  证明今天没病——而 T0 B3 保证了漂移一定是无声的。\n"
+                  "  请让 WorkBuddy 重新 list_fields 导出新快照，再 --options <新快照>。")
+            return 1
+        if is_baseline:
+            print("⚠ 用的是 Build baseline snapshot，只反映建表当时的状态。\n"
+                  "  彩排 / Agent 测试前请改用当场导出的新快照（加 --require-fresh 可强制）。\n")
+
+        options = load_options(a.options)
+        findings = check_options(options)
         for f in findings:
             print(f)
+        print()
+        print(f"{'表':<14}{'业务字段':>9}{'物理字段':>9}  平台自带")
+        for table, biz, phys, platform in field_census(a.options):
+            print(f"{table:<14}{biz:>9}{phys:>9}  {'、'.join(platform) or '—'}")
+        print("\n平台自带字段不是我们建的，也不在 SCHEMA 里，不影响任何判定。")
         print(f"\n{'✗ ' + str(len(findings)) + ' 处不一致' if findings else '✓ 线上选项与冻结词表完全一致'}")
         return 1 if findings else 0
 

@@ -18,8 +18,10 @@ import tempfile
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
-from donghu_demo import FIELD_KINDS, SELECT, SINGLE, Dataset, field_options, to_cst_millis
-from mcp_payloads import build_fields, build_records, check_options, load_options, verify
+from donghu_demo import (FIELD_KINDS, SCHEMA, SELECT, SINGLE, Dataset, field_options,
+                          to_cst_millis)
+from mcp_payloads import (build_fields, build_records, check_options, field_census,
+                          load_options, verify)
 
 PASSED, FAILED = [], []
 
@@ -84,7 +86,8 @@ def write_tmp(obj) -> str:
 
 DS = Dataset.load()
 SNAP_RAW = make_snapshot()
-SNAP = load_options(write_tmp(SNAP_RAW))
+SNAP_PATH = write_tmp(SNAP_RAW)
+SNAP = load_options(SNAP_PATH)
 
 
 @case("建表 payload 为每个选项字段预设了完整词表")
@@ -249,6 +252,62 @@ def _():
         {"field": "need_id", "text_value": {"items": [{"text": "N099", "type": "text"}]}}]})
     findings = verify(DS, "Needs", write_tmp(dump))
     assert any("[多余]" in f and "N099" in f for f in findings), findings
+
+
+@case("建字段：singleSelect 用 property_single_select，select 用 property_select")
+def _():
+    # Build Phase 1 实测：用错属性键会被整批拒绝（22020），同批其它字段也不会创建
+    for table in FIELD_KINDS:
+        for f in build_fields(table)["fields"]:
+            kind = FIELD_KINDS[table][f["field_title"]]
+            if kind == SINGLE:
+                assert "property_single_select" in f, f"{table}.{f['field_title']} 单选用错属性键"
+                assert "property_select" not in f
+            elif kind == SELECT:
+                assert "property_select" in f, f"{table}.{f['field_title']} 多选用错属性键"
+                assert "property_single_select" not in f
+
+
+@case("建字段：dateTime 必须带 property_date_time")
+def _():
+    # Build Phase 1 实测：不带会被拒（22018）
+    from donghu_demo import DATETIME
+    for table in FIELD_KINDS:
+        for f in build_fields(table)["fields"]:
+            if FIELD_KINDS[table][f["field_title"]] == DATETIME:
+                assert "property_date_time" in f, f"{table}.{f['field_title']} 缺 property_date_time"
+                assert f["property_date_time"].get("format"), "format 不能为空"
+
+
+@case("写记录：text_value 和 option_value.items 都是对象数组，不是纯字符串")
+def _():
+    # Build Phase 1 实测：纯字符串连 MCP 参数校验都过不了
+    recs, _ = build_records(DS, "Residents", SNAP)
+    for v in recs[0]["field_values"]:
+        if "text_value" in v:
+            items = v["text_value"]["items"]
+            assert all(i.get("type") == "text" and "text" in i for i in items), v
+        if "option_value" in v:
+            items = v["option_value"]["items"]
+            assert all(isinstance(i, dict) and "text" in i for i in items), v
+        if "string_value" in v:
+            assert isinstance(v["string_value"], str) and v["string_value"].isdigit(), v
+
+
+@case("字段普查区分业务字段与平台自带字段")
+def _():
+    census = {t: (biz, phys, plat) for t, biz, phys, plat in field_census(SNAP_PATH)}
+    for table, cols in SCHEMA.items():
+        biz, phys, plat = census[table]
+        assert biz == len(cols), f"{table} 业务字段数应为 {len(cols)}"
+        assert phys == biz, f"{table} 模拟快照不含平台字段，物理数应等于业务数"
+    # 模拟真实 SmartSheet 的平台默认列
+    raw = copy.deepcopy(SNAP_RAW)
+    raw["Residents"]["fields"].append({"field_id": "fldSYS", "field_title": "智能表列",
+                                       "field_type": "text"})
+    biz, phys, plat = next((b, p, pl) for t, b, p, pl in field_census(write_tmp(raw))
+                           if t == "Residents")
+    assert (biz, phys, plat) == (13, 14, ["智能表列"]), (biz, phys, plat)
 
 
 @case("选项快照的两种形态都能解析")
