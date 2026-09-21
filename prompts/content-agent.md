@@ -26,7 +26,7 @@ content_type     ：<主题标签词表中的 1 个>
 topic_tags       ：<主题标签词表中的 1–3 个，分号分隔>
 target_population：<亲子家庭 / 老人家庭 / 年轻上班族 / 普通家庭 / 全部居民>
 region           ：<东湖 / 东湖A区 / 东湖B区 / 东湖周边>
-publish_time     ：<YYYY-MM-DD HH:MM>
+publish_time     ：<YYYY-MM-DD HH:MM；仅当原文明确给出发布时间时填写，否则留空并列入缺失字段>
 event_time       ：<活动发生时间；无固定时间留空>
 expire_at        ：<超过这个时间就不该再发；必填>
 commercial_level ：<non_commercial / weak_commercial / service / promotion>
@@ -61,6 +61,12 @@ operator_note    ：<需要人工确认的点；没有留空>
 被判成过期，推荐 Agent 直接拒绝它，而且不报错。
 
 ## 字段判断口径
+
+**`publish_time` 只能来自原始信息明确写出的发布时间。** 原文 / URL 摘要
+没有给出发布时间时必须留空，并列入"缺失字段"。当前系统时间只用于判断时效
+（`expire_at` 是否过期、`status` 取值），**不能冒充来源发布时间**——
+把处理时间填进去，会让运营误以为这条信息是刚刚发布的，来源可信度就丢了。
+`event_time` / `expire_at` 仍按下面的规则从原文明确的活动时间推导，不受此限。
 
 **`expire_at` 必填，而且要认真填。** 推荐规则第 0 步会用它拦截过期内容，
 填错会导致该内容要么提前消失，要么在活动结束后还在推。
