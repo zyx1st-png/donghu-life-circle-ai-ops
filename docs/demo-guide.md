@@ -25,6 +25,9 @@ python3 tools/shift_demo_dates.py --to <演示日期> --write
 # 2. 校验，必须全绿
 python3 tools/validate_demo_data.py
 
+# 2b. 线上词表体检 —— Agent 可能已经悄悄新建过选项（T0 B3）
+python3 tools/mcp_payloads.py check-options
+
 # 3. 打印预期结果，演示时拿来和 Agent 实时输出对照
 python3 tools/validate_demo_data.py --explain C001
 python3 tools/validate_demo_data.py --explain C003
@@ -167,7 +170,7 @@ Ops Agent：匹配 `R014` → Interaction + Need → 查 Services →
 
 至少连续跑 3 次，每次确认：
 
-1. MCP 读取正常，25 条居民一次读全；
+1. MCP 读取正常，25 条居民一次读全（`list_records` 必须传 `field_titles`）；
 2. Quick Capture 匹配到 `3栋张姐`(R003)，不是东门张姐(R017)；
 3. C003 Before 是 5 人且不含 R003，NO_SEND 是王老师；
 4. C003 After 是 6 人且含 R003，理由引用刚才那条互动；

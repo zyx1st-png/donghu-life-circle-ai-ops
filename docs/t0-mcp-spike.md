@@ -86,11 +86,14 @@ PRD §37 的 T0 是四项：读取、新增、更新、创建字段。
 | C4 | 视图创建 | MCP 能否建筛选视图（不能就人工建） | **OBSERVED（半支持）** · `add_view` 可建 grid/kanban/gallery/gantt/calendar/form/query 视图（本表已建 `vUgfGB`），但 grid 视图**不支持传筛选条件**（读回 `filterSpec` 为空），筛选视图仍需人工在界面建 |
 | C5 | 并发写入 | 同时写两条记录是否报错或丢失 | **OBSERVED** · 同一消息内并发调用两条不同记录的 `update_records` 均返回 success，读回两条都正确写入、无丢失、无报错（同记录并发未测；建议工程侧仍串行写同一记录） |
 
-### C3 如果系统字段不可用
+### C3 结论落实
 
-`Needs.created_at` / `updated_at` 改为普通日期时间字段，由运营在录入时填。
-Agent 仍然不生成这两个值（PRD §29 的原则不变）。
-`demo/seed-data/Needs.csv` 目前**不含**这两列，就是为了等这个结论。
+实测确认系统字段的值读不回，因此 `Needs.created_at` / `updated_at`
+已改为普通 dateTime 字段，并进入 `demo/seed-data/Needs.csv`。
+
+读不回就等于对 Agent 不存在，所以值只能由写入方填。
+这偏离了 PRD §29「不让 Agent 手动生成」，是平台能力所迫。
+**完整规则见 `docs/mcp-write-contract.md` §8**，不要在别处另立一套。
 
 ---
 

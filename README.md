@@ -61,19 +61,24 @@ prompts/
 
 docs/
   business-model.md             商业模式背景（business context，非实施规格）
-  t0-mcp-spike.md               T0 MCP 能力验证清单（交 WorkBuddy 执行）
-  sheet-setup.md                SmartSheet 建表规格
+  t0-mcp-spike.md               T0 MCP 能力验证清单 + 实测结果
+  mcp-write-contract.md         SmartSheet 读写契约 —— Prompt 与工具的共同依据
+  sheet-setup.md                建表规格与 Build 执行顺序
   demo-guide.md                 演示手册与台词
   rehearsal-log.md              彩排记录模板
 
 demo/
   anchor.txt                    Demo 数据的日期锚点
   seed-data/*.csv               6 张表的演示数据
+  smartsheet-options.json       建表后由 WorkBuddy 导出的线上选项快照
+  smartsheet-ids.json           file_id / sheet_id 记录
 
 tools/
-  donghu_demo.py                数据模型 + 推荐规则引擎
+  donghu_demo.py                数据模型 + 字段类型 + 推荐规则引擎 + 时间转换
   validate_demo_data.py         数据校验 + 剧情不变量 + 预期结果打印
   shift_demo_dates.py           把整套 Demo 日期平移到新的演示日
+  mcp_payloads.py               建表 / 写入 payload 生成、词表体检、写后核对
+  test_mcp_payloads.py          mcp_payloads 的回归测试
 ```
 
 ## 常用命令
@@ -88,6 +93,13 @@ python3 tools/validate_demo_data.py --explain C003 --after-quick-capture
 
 # 演示改期：先平移日期，否则核心内容会过期、Before/After 演不了
 python3 tools/shift_demo_dates.py --to 2026-10-11 --write
+
+# ---- 与 SmartSheet 打交道 ----
+python3 tools/mcp_payloads.py fields --out /tmp/fields.json        # 建表 payload
+python3 tools/mcp_payloads.py check-options                        # 词表漂移体检
+python3 tools/mcp_payloads.py records --table Residents            # 写入 payload
+python3 tools/mcp_payloads.py verify --table Residents --dump d.json  # 写后核对
+python3 tools/test_mcp_payloads.py                                 # 工具自测
 ```
 
 工具只服务于演示稳定性，不是线上运行时。
@@ -123,10 +135,16 @@ TARGET_TODAY = ELIGIBLE − HOLD    ← Push Plan 的当天执行名单
 
 ## 开工顺序
 
+T0 已在真实环境 PASS（2026-09-20），BUILD GATE 开放。
+
 ```text
-T0 MCP 能力验证（docs/t0-mcp-spike.md，A 组全 PASS）
-→ 建 6 张表（docs/sheet-setup.md）
-→ 导入 Demo Seed
+Step 0 探针：确认单选 / dateTime 的取值键
+→ 建 6 张表（payload 由 tools/mcp_payloads.py fields 生成）
+→ list_fields 导出选项快照
+→ check-options 词表体检
+→ 生成 records payload（未注册取值会拒绝生成）
+→ add_records 写入 → list_records 读回 → verify 核对
+→ 人工建筛选视图
 → Content Agent
 → Recommendation Agent
 → Ops Agent / Quick Capture
@@ -149,6 +167,8 @@ T0 MCP 能力验证（docs/t0-mcp-spike.md，A 组全 PASS）
 | `active` 内容必须有 `expire_at` | `config/recommendation-rules.md` | 留空曾等同于"永不过期"，活动结束几周后仍会被推，且完全无声 |
 | Need 判定看待办事项而非句式 | `prompts/ops-agent.md` | 「有没有靠谱的保洁？」是疑问句但确是真实需求，按句式切会系统性漏掉商业需求 |
 | 未满足 Need 本身即推荐证据（E0） | `config/recommendation-rules.md` | `Needs` 是待办事项的权威来源；只认派生的 `recent_needs` 会让画像一被清理，真实需求就永远匹配不回本人 |
+| `Needs.created_at` / `updated_at` 改普通 dateTime 字段并进 CSV | `docs/sheet-setup.md` | T0 C3 实测：系统时间字段的值 `list_records` 读不回，读不回就等于对 Agent 不存在 |
+| Seed 不走 CSV 直导，改 payload 生成 + 写后核对 | `docs/mcp-write-contract.md` | T0 B6 实测：半角 `;` 在任何路径都不被拆；T0 A2：写入可能静默失败 |
 
 ## 商业模式背景
 

@@ -5,7 +5,42 @@
 > 字段名、顺序必须与 `demo/seed-data/*.csv` 的表头完全一致，
 > 否则导入会错列。`tools/validate_demo_data.py` 会校验本文件与 CSV 表头的一致性。
 
-## 建表顺序
+## Build 执行顺序
+
+T0 已 PASS（`docs/t0-mcp-spike.md`）。按下面的顺序执行，**不要跳步**——
+每一步的产物都是下一步的前提。读写行为见 `docs/mcp-write-contract.md`。
+
+```text
+0. 探针：确认 singleSelect 的取值键
+1. 建 6 张表（被引用的表先建）
+2. list_fields 导出选项快照 → demo/smartsheet-options.json
+3. check-options 体检（线上选项 vs 冻结词表）
+4. 生成 records payload（有未注册值会拒绝生成）
+5. add_records 写入
+6. list_records 读回 → verify 核对
+7. 人工建筛选视图（T0 C4：grid 视图不支持传筛选条件）
+```
+
+### Step 0 · 探针（5 分钟，别省）
+
+T0 A2 测了单行文本 / 多选 / 日期时间三种类型，也记录了对应的三个取值键，
+B5 又单独验证了日期时间读回逐字一致。所以这三者都有实测支撑。
+
+**唯一没被 T0 覆盖的是 `singleSelect`**——它不在那三种类型里。
+六张表有 20 多个单选字段，这一处不确认，建表和写入会整片出错。
+
+1. 在临时表里建一个 `singleSelect` 字段，预设 2 个选项；
+2. 用 `option_value.items:["选项A"]` 写入；
+3. `list_records` 读回，确认写进去的是那个选项，而不是空值或新建的选项。
+
+读回不对就换键再试，**确认结果改到 `tools/mcp_payloads.py` 的 `VALUE_KEY` 一处**，
+不要在别处打补丁。
+
+顺手把 `dateTime` 也复核一遍（`string_value:"1790386200000"`，对应东八区
+`2026-09-26 09:30`，可肉眼核对）——那是复核既有证据，不是补验证，但它失败时无声，
+多花一分钟值得。
+
+### Step 1 · 建表顺序
 
 被引用的表先建，避免引用悬空：
 
@@ -18,13 +53,23 @@
 6. Push Plans     （引用 Residents / Contents）
 ```
 
+`add_fields` 的 payload 直接生成，不要手抄——
+17 个标签 × 多个字段，手抄必错：
+
+```bash
+python3 tools/mcp_payloads.py fields --out /tmp/fields.json
+python3 tools/mcp_payloads.py fields --table Residents      # 只看一张
+```
+
 ## 选项字段的准备
 
 单选和多选字段的选项，取值一律来自 `config/tags.md` 和 `config/vocabulary.md`。
 
-- T0 的 A5 PASS → 用 MCP 建字段时直接预设选项；
-- A5 FAIL → 运营人员在 SmartSheet 界面手工把选项建好，**建完再导数据**。
-  先导数据后建选项，多选值会变成游离文本。
+**T0 B2 PASS**：`property_select.options:[{text, style}]` 可以在建字段时直接预设，
+`list_fields` 读回确认选项与选项 ID 全部按预设生成。所以选项由 MCP 建，不用手工。
+
+但 **T0 B3 FAIL**：写入未注册的值会静默新建选项，还会把原有多选值整体替换。
+所以预设选项只是第一道防线，第二道是写入前的 fail-closed 校验（Step 3–4）。
 
 主题标签词表（17 项）在多个字段里重复使用，建议先在一处建好再复制：
 
@@ -122,16 +167,15 @@
 | status | 单选 | 是 | `new` / `following` / `resolved` / `unable_to_resolve` |
 | matched_service_id | 单行文本 | 否 | `resolved` 必填；`unable_to_resolve` 必须留空 |
 | followup_note | 多行文本 | 否 | |
+| created_at | 日期时间 | 是 | 普通 dateTime，不是系统字段 |
+| updated_at | 日期时间 | 是 | 普通 dateTime，不是系统字段 |
 
-**另加两个系统字段**（不在 CSV 里，导入后由系统自动维护）：
-
-| 字段 | 类型 |
-|---|---|
-| created_at | 系统创建时间 |
-| updated_at | 系统最后修改时间 |
-
-> T0 的 B2 若确认系统字段不可用，改为普通日期时间字段，由运营录入。
-> Agent 无论如何不生成这两个值。
+> **与 PRD 的差异**：PRD §17 / §29 要求这两列用 SmartSheet 系统字段，
+> 并明确"不让 Agent 手动生成"。
+> **T0 C3 实测**：`createdTime` / `modifiedTime` 字段能建，但 `list_records`
+> 读不回它们的值（`include_computed_values=true` 也不行）。
+> 读不回就等于对 Agent 不存在，因此改为普通 dateTime 字段，并已进入
+> `demo/seed-data/Needs.csv`。写入方填值的规则见 `docs/mcp-write-contract.md` §8。
 
 ## 06 Push Plans
 
@@ -167,16 +211,74 @@
 
 ---
 
-## 导入 Demo Seed
+## Step 2–6 · 导入 Demo Seed
 
-1. 先确认 T0 的 B1 结论：CSV 里的半角 `;` 会不会被拆成多选值。
-   不会的话先按 B1 记录的方式转换。
-2. 按建表顺序导入 6 个 CSV。
-3. 导入后逐表核对条数。
-4. 抽查 3 条多选字段，确认是多个选项而不是一整串文本。
-   条数核对：居民 25 / 内容 15 / 互动 20 / 需求 6 / 服务 8 / 推送 6。
-5. 抽查 `R003`：`recent_interests` 必须为空，`long_term_interests` 只有「社区活动」。
-   这条错了，Before/After 整场戏就没了。
+**不要用 CSV 直接导入。** T0 B6 实测：`manage.pre_import` / `async_import`
+导入 CSV 生成的是**在线表格**而不是智能表格，多选列原样保留整串
+`买菜生鲜;社区活动`；把整串作为单个选项文本写入多选字段，
+则会生成一个名叫「买菜生鲜;社区活动」的选项。
+
+半角 `;` 在任何路径都不会被拆。所以 seed 在仓库侧先拆成数组，
+再用 `add_records` 逐条写。
+
+### Step 2 · 导出选项快照
+
+建完表后立刻做，这是后面所有写入的前提：
+
+```bash
+# 对 6 张表分别调 list_fields，把原始返回存成一个 JSON
+# 结构见 docs/mcp-write-contract.md §5
+demo/smartsheet-options.json
+```
+
+顺手把 `file_id` / `sheet_id` 记进 `demo/smartsheet-ids.json`，不要靠记忆。
+
+### Step 3 · 词表体检
+
+```bash
+python3 tools/mcp_payloads.py check-options --options demo/smartsheet-options.json
+```
+
+必须全绿再往下。这一步会抓出建表时漏建的选项和多建的选项——
+两者都会让后面的写入静默出错。
+
+### Step 4 · 生成写入 payload
+
+```bash
+for t in Residents Services Contents Interactions Needs Push_Plans; do
+  python3 tools/mcp_payloads.py records --table $t --out /tmp/$t.records.json
+done
+```
+
+任何一个取值不在线上已注册的选项里，**工具会拒绝生成并指出是哪条记录的哪个字段**。
+这是 fail-closed：宁可不生成，也不要生成一份会污染词表的 payload。
+
+### Step 5 · 写入
+
+按建表顺序逐表 `add_records`。**不要跨表并行**——
+T0 C5 只验证了并发写不同记录安全，表级别的顺序依赖仍在。
+
+### Step 6 · 读回核对
+
+```bash
+# 每张表：list_records 带 field_titles 读回全部字段，存成 JSON
+python3 tools/mcp_payloads.py verify --table Residents --dump /tmp/Residents.dump.json
+```
+
+**这一步不能省。** T0 A2 实测：`add_records` 格式错误时返回 success
+但写出空记录——"调用成功"和"写进去了"是两件事。
+
+verify 会报四类问题：`[空记录]` `[缺失]` `[不符]` `[多余]`。
+
+条数核对：居民 25 / 内容 15 / 互动 20 / 需求 6 / 服务 8 / 推送 6。
+
+### Step 6b · 剧情抽查
+
+verify 全绿之后，再人工确认一条：
+
+> `R003` 的 `recent_interests` **必须为空**，`long_term_interests` 只有「社区活动」。
+
+这条错了，Before/After 整场戏就没了。
 
 ## 运营视图
 

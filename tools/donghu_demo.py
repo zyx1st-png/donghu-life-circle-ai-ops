@@ -68,8 +68,10 @@ MULTI_FIELDS = {
     "Services.target_population": TARGET_POPULATIONS,
 }
 
-# PRD v0.4.1 冻结字段顺序（Needs 的 created_at / updated_at 使用 SmartSheet 系统字段，
-# 不进 CSV —— 见 PRD §29）
+# PRD v0.4.1 冻结字段顺序。
+# Needs.created_at / updated_at 原计划用 SmartSheet 系统字段（PRD §29），
+# 但 T0 C3 实测 createdTime / modifiedTime 的值 list_records 读不回，
+# 因此改为普通 dateTime 字段并进入 CSV。
 SCHEMA = {
     "Residents": ["resident_id", "display_name", "identify_note", "community", "family_stage",
                   "long_term_interests", "recent_interests", "recent_needs", "avoid_topics",
@@ -81,7 +83,7 @@ SCHEMA = {
                      "related_type", "related_id", "raw_note", "ai_summary", "topic_tags",
                      "sentiment", "created_by"],
     "Needs": ["need_id", "resident_id", "need_category", "need_summary", "urgency", "status",
-              "matched_service_id", "followup_note"],
+              "matched_service_id", "followup_note", "created_at", "updated_at"],
     "Services": ["service_id", "provider_name", "service_name", "service_category",
                  "service_summary", "price_description", "service_region", "target_population",
                  "contact", "status", "operator_note"],
@@ -323,3 +325,92 @@ def recommend(ds: Dataset, content_id: str, today: dt.datetime) -> dict:
 def format_targets(decisions: list[Decision]) -> str:
     """Push Plans.target_residents 的可读格式：R003 张姐；R011 小王"""
     return "；".join(f"{d.resident_id} {d.display_name}" for d in decisions)
+
+
+# ---------------------------------------------------------------- SmartSheet 字段类型
+#
+# 只使用 T0 B1 实测确认可创建的类型。多行文本和 URL 一律按 text 建：
+# MVP-0 不需要它们的 UI 特性，少一种类型就少一处未经验证的假设。
+
+TEXT, SELECT, SINGLE, DATETIME = "text", "select", "singleSelect", "dateTime"
+
+FIELD_KINDS = {
+    "Residents": {
+        "resident_id": TEXT, "display_name": TEXT, "identify_note": TEXT,
+        "community": SINGLE, "family_stage": SELECT, "long_term_interests": SELECT,
+        "recent_interests": SELECT, "recent_needs": SELECT, "avoid_topics": SELECT,
+        "last_interaction_at": DATETIME, "profile_summary": TEXT,
+        "operator_note": TEXT, "status": SINGLE,
+    },
+    "Contents": {
+        "content_id": TEXT, "title": TEXT, "source": TEXT, "source_url": TEXT,
+        "summary": TEXT, "content_type": SINGLE, "topic_tags": SELECT,
+        "target_population": SELECT, "region": SINGLE, "publish_time": DATETIME,
+        "event_time": DATETIME, "expire_at": DATETIME, "commercial_level": SINGLE,
+        "risk_level": SINGLE, "status": SINGLE, "operator_note": TEXT,
+    },
+    "Interactions": {
+        "interaction_id": TEXT, "resident_id": TEXT, "interaction_time": DATETIME,
+        "interaction_type": SINGLE, "related_type": SINGLE, "related_id": TEXT,
+        "raw_note": TEXT, "ai_summary": TEXT, "topic_tags": SELECT,
+        "sentiment": SINGLE, "created_by": TEXT,
+    },
+    "Needs": {
+        "need_id": TEXT, "resident_id": TEXT, "need_category": SINGLE,
+        "need_summary": TEXT, "urgency": SINGLE, "status": SINGLE,
+        "matched_service_id": TEXT, "followup_note": TEXT,
+        "created_at": DATETIME, "updated_at": DATETIME,
+    },
+    "Services": {
+        "service_id": TEXT, "provider_name": TEXT, "service_name": TEXT,
+        "service_category": SINGLE, "service_summary": TEXT, "price_description": TEXT,
+        "service_region": SELECT, "target_population": SELECT, "contact": TEXT,
+        "status": SINGLE, "operator_note": TEXT,
+    },
+    "Push_Plans": {
+        "push_id": TEXT, "push_date": DATETIME, "content_id": TEXT,
+        "target_residents": TEXT, "target_segment": TEXT, "recommend_reason": TEXT,
+        "message_text": TEXT, "no_send_residents": TEXT, "no_send_reason": TEXT,
+        "hold_residents": TEXT, "hold_reason": TEXT, "review_status": SINGLE,
+        "send_status": SINGLE, "operator_note": TEXT,
+    },
+}
+
+
+def field_options(table: str, field: str) -> list[str] | None:
+    """该字段应该预设哪些选项。text / dateTime 返回 None。"""
+    kind = FIELD_KINDS[table][field]
+    if kind not in (SELECT, SINGLE):
+        return None
+    spec = f"{table}.{field}"
+    if spec in MULTI_FIELDS:
+        return list(MULTI_FIELDS[spec])
+    if spec in ENUMS:
+        return [v for v in ENUMS[spec] if v]     # 去掉代表"留空"的空串
+    if field in ("community", "region"):
+        return list(REGIONS)
+    raise KeyError(f"{spec} 是选项字段但没有冻结词表")
+
+
+# ---------------------------------------------------------------- 时间转换
+#
+# T0 B5：腾讯文档智能表格的 dateTime 读写用东八区毫秒时间戳，API 层无时区偏移。
+# 转换只在这里做一次。Prompt 不要各自实现，散落三份必然漂。
+#
+# 校准证据：T0 B5 写入 "2026-09-26 09:30" 得到 1790386200000，与本函数一致。
+
+CST = dt.timezone(dt.timedelta(hours=8))
+
+
+def to_cst_millis(value: str) -> int | None:
+    """"YYYY-MM-DD HH:MM" 或 "YYYY-MM-DD" → 东八区毫秒时间戳。"""
+    t = parse_time(value)
+    if t is None:
+        return None
+    return int(t.replace(tzinfo=CST).timestamp() * 1000)
+
+
+def from_cst_millis(ms: int | str, date_only: bool = False) -> str:
+    """东八区毫秒时间戳 → "YYYY-MM-DD HH:MM"，用于读回核对。"""
+    t = dt.datetime.fromtimestamp(int(ms) / 1000, CST)
+    return f"{t:%Y-%m-%d}" if date_only else f"{t:%Y-%m-%d %H:%M}"
