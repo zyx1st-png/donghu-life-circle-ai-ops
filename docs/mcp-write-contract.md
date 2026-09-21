@@ -34,29 +34,60 @@ file_id（文档） → sheet_id（子表） → record_id（记录） → field
 
 ## 2. 字段取值的形状
 
+> **以 2026-09-21 Build Phase 1 实测为准。** 本节曾按 T0 阶段的记录写成
+> "text_value 是纯字符串"，正式 Build 时被 MCP 参数校验直接拒绝。
+> 下面是真实建成六张表、写入 80 条记录、逐表 verify PASS 的形状。
+
+### 写记录
+
 ```jsonc
 {"field_values": [
-  {"field": "display_name",        "text_value": "张姐"},
-  {"field": "long_term_interests", "option_value": {"items": ["社区活动", "买菜生鲜"]}},
-  {"field": "last_interaction_at", "string_value": "1790386200000"}
+  {"field": "display_name",
+   "text_value": {"items": [{"text": "张姐", "type": "text"}]}},
+
+  {"field": "long_term_interests",                       // 多选
+   "option_value": {"items": [{"text": "社区活动"}, {"text": "买菜生鲜"}]}},
+
+  {"field": "status",                                    // 单选，同样是 items 数组
+   "option_value": {"items": [{"text": "active"}]}},
+
+  {"field": "last_interaction_at",
+   "string_value": "1790386200000"}                      // 东八区毫秒时间戳字符串
 ]}
 ```
 
-| 字段类型 | 取值键 | 证据 |
-|---|---|---|
-| `text` | `text_value` | T0 A2 实测确认 |
-| `select`（多选） | `option_value.items` 数组 | T0 A2 实测确认 |
-| `singleSelect`（单选） | `option_value.items`（单元素） | **未被 T0 覆盖**，Build 第 0 步确认 |
-| `dateTime` | `string_value`（东八区毫秒时间戳字符串） | T0 A2 + B5 实测确认 |
+| 字段类型 | 取值键 | 形状 | 证据 |
+|---|---|---|---|
+| `text` | `text_value` | `{items:[{text, type:"text"}]}` | Phase 1 实测 |
+| `select`（多选） | `option_value` | `{items:[{text}]}` | Phase 1 实测 |
+| `singleSelect`（单选） | `option_value` | `{items:[{text}]}`（单元素） | **Phase 1 实测 PASS** |
+| `dateTime` | `string_value` | 毫秒时间戳字符串 | T0 A2 + B5，Phase 1 复核 |
 
-> T0 A2 恰好测了三种字段类型（单行文本 / 多选 / 日期时间），也恰好记录了
-> `text_value / option_value / string_value` 三个取值键；B5 又单独验证了
-> 日期时间写入读回逐字一致、无时区漂移。所以这三者都有实测支撑。
->
-> **只有 `singleSelect` 没被 T0 测到**——它不在那三种类型里，
-> 目前按"与多选同族"推定。Build 第 0 步用一条探针记录确认即可；
-> 如有出入，只需改 `tools/mcp_payloads.py` 里的 `VALUE_KEY` 一处。
-> dateTime 在 Step 0 顺手复核一下也好，但那是复核既有证据，不是补验证。
+**`text_value` 和 `option_value.items` 都不接受纯字符串**，必须是对象数组。
+纯字符串连 MCP 的参数校验都过不了——这和 T0 A2 那种"返回 success 写出空记录"
+不是一回事：那是 `field_values` 整体形状错，这是字段级形状错，会直接报错。
+
+`singleSelect` 曾是 T0 唯一没覆盖的未知数，Phase 1 探针已确认：
+写值形状与多选完全相同，就是 `option_value.items:[{text}]`。
+
+### 建字段
+
+**建字段的属性键和写值的取值键是两套东西，不要混。**
+
+| 字段类型 | 建字段属性 | 说明 |
+|---|---|---|
+| `text` | 无 | |
+| `select` | `property_select: {options:[{text}]}` | |
+| `singleSelect` | `property_single_select: {options:[{text}]}` | 用 `property_select` 报 **22020** |
+| `dateTime` | `property_date_time: {format: "..."}` | **必填**，不带报 **22018** |
+
+Demo 用的 format：一般字段 `yyyy-mm-dd hh:mm`，`Push_Plans.push_date` 用 `yyyy-mm-dd`。
+
+**一批 `add_fields` 里只要有一个字段被拒，同批其它字段也不会创建。**
+所以建表失败时不要逐个补，先把整批 payload 改对再重来——
+否则会像 Phase 1 那样留下空壳表（`LQMxvbFFUkRB`，可人工删）。
+
+这些都由 `tools/mcp_payloads.py fields` 生成，不需要手写。
 
 ## 3. 日期时间
 
@@ -126,15 +157,32 @@ python3 tools/mcp_payloads.py records --table Residents --options demo/smartshee
 
 解析不出来时工具会明确报错说它找了哪些键，**不会猜**。
 
-### 漂移体检
+### 漂移体检：必须用当场导出的新快照
 
-每轮彩排前跑一次，比对线上真实选项和冻结词表：
+**`demo/smartsheet-options.json` 是 Build Phase 1 的 baseline snapshot，
+不是线上实时状态。** 它记录的是"建表那一刻线上长什么样"，
+之后 Agent 每写一次多选字段都可能把线上改掉，而仓库里这份文件不会变。
 
-```bash
-python3 tools/mcp_payloads.py check-options --options demo/smartsheet-options.json
+拿仓库里的旧 baseline 跑一遍然后宣布"线上没有漂移"，
+等于用上个月的体检报告证明今天没病。**T0 B3 保证了漂移一定是无声的**，
+所以这个自欺的代价是：词表已经脏了，而你以为它是干净的。
+
+正确流程，每轮彩排 / 关键 Agent 测试前：
+
+```text
+1. WorkBuddy 对 6 张表调 list_fields，导出 fresh live snapshot
+2. python3 tools/mcp_payloads.py check-options --options <fresh snapshot>
+3. PASS 之后才能继续
 ```
 
-T0 B3 保证了漂移一定是无声的，所以这一步不能省。
+**工具不连 MCP，只负责比较。** 导出是 WorkBuddy 的事，
+Python 这边拿到什么就比什么——所以喂给它哪份快照，决定了结论有没有意义。
+
+发现漂移时：在 SmartSheet 界面删掉多出来的选项，重新导出，再跑一次。
+不要直接改仓库里的 baseline 去迁就线上——那是把证据改成结论。
+
+baseline 的用途只有两个：Build 当时的存档，以及生成 records payload 时
+的 fail-closed 依据（那一步发生在 Build 期间，baseline 就是当时的实时状态）。
 
 ## 6. 写 → 读回 → 核对
 
@@ -191,12 +239,39 @@ T0 C3：`createdTime` / `modifiedTime` 字段能建，但 `list_records` 读不�
 
 两者都是普通 dateTime 字段，写入时同样要换算成东八区毫秒时间戳（§3）。
 
-## 9. 并发
+## 9. 平台默认字段
+
+真实 SmartSheet 每张表都会自带一个平台字段 **`智能表列`**，
+不是我们建的，也不在 `SCHEMA` 里。
+
+所以报字段数时要分清，混着说会让人以为建漏了或建多了：
+
+```text
+business field count = SCHEMA 里的业务字段数
+physical field count = business + 1（平台默认的 智能表列）
+```
+
+| 表 | business | physical |
+|---|---:|---:|
+| Residents | 13 | 14 |
+| Services | 11 | 12 |
+| Contents | 16 | 17 |
+| Interactions | 11 | 12 |
+| Needs | 10 | 11 |
+| Push_Plans | 14 | 15 |
+
+**它不是数据层问题，不要因此重建任何东西。**
+`check-options` 只比对 `SCHEMA` 里声明的字段，多出来的平台字段不会报错。
+
+如果平台 UI 支持隐藏该列，**正式 Demo 前作为 UI housekeeping 顺手隐藏**，
+让运营看到的表干净一点。隐藏不了也不影响任何判定。
+
+## 10. 并发
 
 T0 C5：并发写**不同**记录正常，无丢失。同一条记录的并发未测——
 **同一条记录串行写**。
 
-## 10. 视图
+## 11. 视图
 
 T0 C4：`add_view` 能建视图，但 grid 视图不支持传筛选条件。
 `docs/sheet-setup.md` 里的运营视图**由人工在界面建**，不阻塞（PRD §37）。

@@ -11,7 +11,7 @@ T0 已 PASS（`docs/t0-mcp-spike.md`）。按下面的顺序执行，**不要跳
 每一步的产物都是下一步的前提。读写行为见 `docs/mcp-write-contract.md`。
 
 ```text
-0. 探针：确认 singleSelect 的取值键
+0. 探针：确认 singleSelect 的取值键（2026-09-21 已 PASS）
 1. 建 6 张表（被引用的表先建）
 2. list_fields 导出选项快照 → demo/smartsheet-options.json
 3. check-options 体检（线上选项 vs 冻结词表）
@@ -21,24 +21,23 @@ T0 已 PASS（`docs/t0-mcp-spike.md`）。按下面的顺序执行，**不要跳
 7. 人工建筛选视图（T0 C4：grid 视图不支持传筛选条件）
 ```
 
-### Step 0 · 探针（5 分钟，别省）
+### Step 0 · 探针 —— 2026-09-21 已 PASS
 
-T0 A2 测了单行文本 / 多选 / 日期时间三种类型，也记录了对应的三个取值键，
-B5 又单独验证了日期时间读回逐字一致。所以这三者都有实测支撑。
+`singleSelect` 曾是 T0 唯一没覆盖的未知数。Build Phase 1 探针已确认：
+**写值形状与多选完全相同**，就是 `option_value.items:[{text}]`。
+dateTime 同批复核通过（`2026-09-26 09:30` ↔ `1790386200000`，无漂移）。
 
-**唯一没被 T0 覆盖的是 `singleSelect`**——它不在那三种类型里。
-六张表有 20 多个单选字段，这一处不确认，建表和写入会整片出错。
+同一次探针还测出两个 T0 没碰到的建字段约束，已修进工具：
 
-1. 在临时表里建一个 `singleSelect` 字段，预设 2 个选项；
-2. 用 `option_value.items:["选项A"]` 写入；
-3. `list_records` 读回，确认写进去的是那个选项，而不是空值或新建的选项。
+| 现象 | 错误码 | 结论 |
+|---|---|---|
+| `singleSelect` 用 `property_select` 预设选项 | 22020 | 必须用 `property_single_select` |
+| `dateTime` 不带 `property_date_time` | 22018 | 该属性必填，至少给 `format` |
 
-读回不对就换键再试，**确认结果改到 `tools/mcp_payloads.py` 的 `VALUE_KEY` 一处**，
-不要在别处打补丁。
+**一批 `add_fields` 里只要有一个字段被拒，同批其它字段也不会创建。**
+Phase 1 就是这么留下一个空壳表的。建表失败先改整批 payload 再重来，不要逐个补。
 
-顺手把 `dateTime` 也复核一遍（`string_value:"1790386200000"`，对应东八区
-`2026-09-26 09:30`，可肉眼核对）——那是复核既有证据，不是补验证，但它失败时无声，
-多花一分钟值得。
+完整形状见 `docs/mcp-write-contract.md` §2。重建表时不需要再跑这一步。
 
 ### Step 1 · 建表顺序
 
@@ -65,8 +64,12 @@ python3 tools/mcp_payloads.py fields --table Residents      # 只看一张
 
 单选和多选字段的选项，取值一律来自 `config/tags.md` 和 `config/vocabulary.md`。
 
-**T0 B2 PASS**：`property_select.options:[{text, style}]` 可以在建字段时直接预设，
-`list_fields` 读回确认选项与选项 ID 全部按预设生成。所以选项由 MCP 建，不用手工。
+**T0 B2 PASS**：选项可以在建字段时直接预设，`list_fields` 读回确认选项与选项 ID
+全部按预设生成。所以选项由 MCP 建，不用手工。
+
+属性键按字段类型区分（Build Phase 1 实测，用错报 22020）：
+多选用 `property_select.options:[{text}]`，单选用 `property_single_select.options:[{text}]`。
+`tools/mcp_payloads.py fields` 已按类型生成，不需要手写。
 
 但 **T0 B3 FAIL**：写入未注册的值会静默新建选项，还会把原有多选值整体替换。
 所以预设选项只是第一道防线，第二道是写入前的 fail-closed 校验（Step 3–4）。
@@ -241,6 +244,15 @@ python3 tools/mcp_payloads.py check-options --options demo/smartsheet-options.js
 
 必须全绿再往下。这一步会抓出建表时漏建的选项和多建的选项——
 两者都会让后面的写入静默出错。
+
+> Build 期间用刚导出的快照是对的，**它当时就是实时状态**。
+> 但这份文件一旦入库就变成 baseline：之后每轮彩排 / Agent 测试都必须
+> **重新导出新快照**再比，否则等于用上个月的体检报告证明今天没病。
+> 见契约 §5，工具加 `--require-fresh` 会拒绝拿 baseline 冒充实时状态。
+
+它同时会打印每张表的业务字段数与物理字段数。
+真实 SmartSheet 每张表都自带一个平台字段 `智能表列`，
+所以 **physical = business + 1**。这不是建多了，不要因此重建任何东西。
 
 ### Step 4 · 生成写入 payload
 
