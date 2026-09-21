@@ -86,11 +86,17 @@ python3 tools/validate_demo_data.py
 
 ```bash
 python3 tools/validate_demo_data.py                 # 仓库侧数据自洽
-python3 tools/mcp_payloads.py check-options         # 线上词表有没有被悄悄改过
+
+# 线上词表体检 —— 必须用当场导出的新快照，不能用仓库里的 baseline
+# 1) WorkBuddy 对 6 张表调 list_fields 导出 fresh snapshot
+# 2) 比对
+python3 tools/mcp_payloads.py check-options --options <fresh> --require-fresh
 ```
 
-第二条不能省：T0 B3 实测，Agent 写入词表外的值会**静默新建选项**并替换原值，
-不报错。词表一旦漂移，推荐规则的集合运算就开始失准，而表面上名单照常出。
+第二条不能省，而且**不能偷懒用 `demo/smartsheet-options.json`**——
+那是 Build 当时的 baseline，不会跟着线上变。T0 B3 实测：Agent 写入词表外的值会
+**静默新建选项**并替换原值，不报错。拿旧 baseline 比一遍然后说"没漂移"，
+只是把无声的问题变成有据可依的错觉。`--require-fresh` 会直接拒绝这种用法。
 
 ## 平台读写
 

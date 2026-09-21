@@ -26,7 +26,8 @@ python3 tools/shift_demo_dates.py --to <演示日期> --write
 python3 tools/validate_demo_data.py
 
 # 2b. 线上词表体检 —— Agent 可能已经悄悄新建过选项（T0 B3）
-python3 tools/mcp_payloads.py check-options
+#     必须先让 WorkBuddy 重新 list_fields 导出新快照，不能用仓库里的 baseline
+python3 tools/mcp_payloads.py check-options --options <fresh> --require-fresh
 
 # 3. 打印预期结果，演示时拿来和 Agent 实时输出对照
 python3 tools/validate_demo_data.py --explain C001

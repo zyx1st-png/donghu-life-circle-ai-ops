@@ -70,7 +70,7 @@ docs/
 demo/
   anchor.txt                    Demo 数据的日期锚点
   seed-data/*.csv               6 张表的演示数据
-  smartsheet-options.json       建表后由 WorkBuddy 导出的线上选项快照
+  smartsheet-options.json       Build 当时的选项 baseline 快照（**不是线上实时状态**）
   smartsheet-ids.json           file_id / sheet_id 记录
 
 tools/
@@ -96,7 +96,7 @@ python3 tools/shift_demo_dates.py --to 2026-10-11 --write
 
 # ---- 与 SmartSheet 打交道 ----
 python3 tools/mcp_payloads.py fields --out /tmp/fields.json        # 建表 payload
-python3 tools/mcp_payloads.py check-options                        # 词表漂移体检
+python3 tools/mcp_payloads.py check-options --options <fresh> --require-fresh  # 词表漂移体检
 python3 tools/mcp_payloads.py records --table Residents            # 写入 payload
 python3 tools/mcp_payloads.py verify --table Residents --dump d.json  # 写后核对
 python3 tools/test_mcp_payloads.py                                 # 工具自测
@@ -133,17 +133,15 @@ TARGET_TODAY = ELIGIBLE − HOLD    ← Push Plan 的当天执行名单
 - `Interactions.raw_note` 按追加事实处理，不为还原演示而修改历史记录。
 - 密钥、Token、手机号、真实企微 ID 等不得提交 GitHub。
 
-## 开工顺序
+## 进度
 
-T0 已在真实环境 PASS（2026-09-20），BUILD GATE 开放。
+- **T0**（2026-09-20）真实环境 PASS，BUILD GATE 开放。
+- **Build Phase 1**（2026-09-21）六表建成、80 条 seed 写入、逐表 verify PASS。
+  `singleSelect` 取值形状已确认，不再有未知数。
 
 ```text
-Step 0 探针：确认单选 / dateTime 的取值键
-→ 建 6 张表（payload 由 tools/mcp_payloads.py fields 生成）
-→ list_fields 导出选项快照
-→ check-options 词表体检
-→ 生成 records payload（未注册取值会拒绝生成）
-→ add_records 写入 → list_records 读回 → verify 核对
+Step 0 探针 ✓ → 建 6 张表 ✓ → 导出选项快照 ✓ → check-options ✓
+→ 生成 records payload ✓ → 写入 ✓ → 读回 verify ✓
 → 人工建筛选视图
 → Content Agent
 → Recommendation Agent
