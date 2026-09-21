@@ -207,6 +207,30 @@ def _():
         "多选被合成一个带分号的选项，verify 没抓到"
 
 
+@case("verify 抓得到重复写入（两条完全相同的正确记录）")
+def _():
+    recs, _ = build_records(DS, "Needs", SNAP)
+    dump = as_dump(recs)
+    dump["records"].append(copy.deepcopy(dump["records"][1]))   # 原样复制一条正确记录
+    findings = verify(DS, "Needs", write_tmp(dump))
+    assert any("[重复]" in f and "N002" in f for f in findings), findings
+    assert not any("[不符]" in f for f in findings), \
+        f"重复记录内容正确，不该报不符: {findings}"
+
+
+@case("六张表都按各自主键检测重复")
+def _():
+    for table, dup_key in (("Residents", "R001"), ("Contents", "C001"),
+                           ("Interactions", "I001"), ("Needs", "N001"),
+                           ("Services", "S001"), ("Push_Plans", "P001")):
+        recs, problems = build_records(DS, table, SNAP)
+        assert not problems, (table, problems)
+        dump = as_dump(recs)
+        dump["records"].append(copy.deepcopy(dump["records"][0]))
+        findings = verify(DS, table, write_tmp(dump))
+        assert any("[重复]" in f and dup_key in f for f in findings), (table, findings)
+
+
 @case("verify 抓得到多写的记录")
 def _():
     recs, _ = build_records(DS, "Needs", SNAP)

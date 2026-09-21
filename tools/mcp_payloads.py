@@ -41,12 +41,13 @@ DEFAULT_OPTIONS = os.path.join(ROOT, "demo", "smartsheet-options.json")
 
 # T0 A2 实测：field_values 的形状是 [{field, text_value | option_value | string_value}]，
 # 其中 field 用**字段标题**匹配（C2）。文本用 text_value、多选用 option_value 已实测确认。
-# 单选与 dateTime 的取值键属于推断，Build 第 0 步要用 1 条探针记录确认（见 docs/mcp-write-contract.md）。
+# A2 恰好测了三种字段类型（单行文本 / 多选 / 日期时间），也恰好记录了三个取值键，
+# 因此这三者都有实测支撑。**只有 singleSelect 没被测到**，它需要 Build 第 0 步确认。
 VALUE_KEY = {
     "text": "text_value",          # T0 A2 实测确认
     SELECT: "option_value",        # T0 A2 实测确认（items 数组）
-    SINGLE: "option_value",        # 推断：与多选同族
-    DATETIME: "string_value",      # 推断：A2 列出的第三个键，值为毫秒时间戳
+    SINGLE: "option_value",        # 待确认：未被 T0 覆盖，按与多选同族推定
+    DATETIME: "string_value",      # T0 A2 + B5 实测确认（东八区毫秒时间戳，读回逐字一致）
 }
 
 DATE_ONLY = {("Push_Plans", "push_date")}   # PRD 里是「日期」而非「日期时间」
@@ -189,6 +190,10 @@ def verify(ds: Dataset, table: str, dump_path: str) -> list[str]:
 
     T0 A2：add_records 格式错误时返回 success 但写入空记录。
     所以"调用成功"和"真的写进去了"必须分开确认，这里做后者。
+
+    重复业务 ID 也算失败。add_records 在结果不确定时重试（超时、网络抖动）
+    会造成非幂等的重复写入，而两条内容完全相同的记录逐字段比对是全绿的——
+    只有按主键计数才看得出来。
     """
     attr = {"Residents": "residents", "Contents": "contents", "Interactions": "interactions",
             "Needs": "needs", "Services": "services", "Push_Plans": "push_plans"}[table]
@@ -199,7 +204,7 @@ def verify(ds: Dataset, table: str, dump_path: str) -> list[str]:
         raw = json.load(fh)
     rows = raw.get("records", raw) if isinstance(raw, dict) else raw
 
-    findings, seen = [], set()
+    findings, counts = [], {}
     for rec in rows:
         fv = rec.get("field_values", rec)
         got = {}
@@ -215,10 +220,13 @@ def verify(ds: Dataset, table: str, dump_path: str) -> list[str]:
         if not rid or isinstance(rid, list):
             findings.append(f"[空记录] 读回一条没有 {key} 的记录——典型的静默写入失败（T0 A2）")
             continue
-        seen.add(rid)
+        counts[rid] = counts.get(rid, 0) + 1
         if rid not in expected:
-            findings.append(f"[多余] 线上存在 seed 里没有的 {rid}")
+            if counts[rid] == 1:
+                findings.append(f"[多余] 线上存在 seed 里没有的 {rid}")
             continue
+        if counts[rid] > 1:
+            continue        # 内容比对只做第一条，重复单独报
         for name in SCHEMA[table]:
             want = (expected[rid].get(name) or "").strip()
             raw_have = got.get(name)
@@ -238,7 +246,11 @@ def verify(ds: Dataset, table: str, dump_path: str) -> list[str]:
                 have = from_cst_millis(have, date_only=(table, name) in DATE_ONLY)
             if want != have:
                 findings.append(f"[不符] {rid}.{name} 期望 {want!r}，读回 {have!r}")
-    for rid in sorted(set(expected) - seen):
+    for rid, n in sorted(counts.items()):
+        if n > 1:
+            findings.append(f"[重复] {rid} 在线上出现 {n} 条——"
+                            f"写入重试造成的非幂等重复，两条内容相同时逐字段比对看不出来")
+    for rid in sorted(set(expected) - set(counts)):
         findings.append(f"[缺失] {rid} 没有写进去")
     return findings
 
