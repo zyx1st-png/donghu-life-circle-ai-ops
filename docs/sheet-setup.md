@@ -11,7 +11,7 @@ T0 已 PASS（`docs/t0-mcp-spike.md`）。按下面的顺序执行，**不要跳
 每一步的产物都是下一步的前提。读写行为见 `docs/mcp-write-contract.md`。
 
 ```text
-0. 探针：确认两处推断的取值键
+0. 探针：确认 singleSelect 的取值键
 1. 建 6 张表（被引用的表先建）
 2. list_fields 导出选项快照 → demo/smartsheet-options.json
 3. check-options 体检（线上选项 vs 冻结词表）
@@ -23,15 +23,22 @@ T0 已 PASS（`docs/t0-mcp-spike.md`）。按下面的顺序执行，**不要跳
 
 ### Step 0 · 探针（5 分钟，别省）
 
-`text_value` 和多选的 `option_value` 已被 T0 A2 实测确认，
-但**单选和 dateTime 的取值键属于推断**。用一条探针记录确认：
+T0 A2 测了单行文本 / 多选 / 日期时间三种类型，也记录了对应的三个取值键，
+B5 又单独验证了日期时间读回逐字一致。所以这三者都有实测支撑。
 
-1. 在临时表里建一个 `singleSelect` 字段（预设 2 个选项）和一个 `dateTime` 字段；
-2. 用 `option_value.items:["选项A"]` 写单选，用 `string_value:"1790386200000"` 写 dateTime；
-3. `list_records` 读回，确认两者都正确。
+**唯一没被 T0 覆盖的是 `singleSelect`**——它不在那三种类型里。
+六张表有 20 多个单选字段，这一处不确认，建表和写入会整片出错。
+
+1. 在临时表里建一个 `singleSelect` 字段，预设 2 个选项；
+2. 用 `option_value.items:["选项A"]` 写入；
+3. `list_records` 读回，确认写进去的是那个选项，而不是空值或新建的选项。
 
 读回不对就换键再试，**确认结果改到 `tools/mcp_payloads.py` 的 `VALUE_KEY` 一处**，
-不要在别处打补丁。`1790386200000` 对应东八区 `2026-09-26 09:30`，可直接肉眼核对。
+不要在别处打补丁。
+
+顺手把 `dateTime` 也复核一遍（`string_value:"1790386200000"`，对应东八区
+`2026-09-26 09:30`，可肉眼核对）——那是复核既有证据，不是补验证，但它失败时无声，
+多花一分钟值得。
 
 ### Step 1 · 建表顺序
 
