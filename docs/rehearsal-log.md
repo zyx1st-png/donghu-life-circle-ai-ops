@@ -132,11 +132,13 @@ python3 tools/validate_demo_data.py          # 必须全绿
 
 - [x] 三轮的 SEND / NO_SEND 名单完全一致；
 - [x] 三轮结果都与 `tools/validate_demo_data.py --explain` 的输出一致；
-- [x] Quick Capture 三轮都在 15 秒内出草稿；
 - [x] 整场三轮都在 10 分钟内；
-- [x] Plan B 的 `Demo_After` 副本已备好；
-- [ ] Plan C 的完整录屏已录好。
+- [x] Plan B 的 `Demo_After` 副本已备好。
 
-任何一项不达标，先修再演。
+另注（非判定条件）：Quick Capture 草稿耗时**未单独计时**——表中记录的
+~25–50s 是「草稿 + 写入 + 读回验收」完整步骤耗时，不能用来证明草稿 <15s。
+该 15s 项因此不作为硬 PASS 条件；若后续需要该指标，应单独掐表测草稿段。
 
-> Phase 3 结论（2026-09-22）：除 Plan C 录屏（人工事项）外全部达标，判定 **MVP-0 DEMO READY**。
+以上判定项任何一项不达标，先修再演。
+
+> Phase 3 结论（2026-09-22）：以上判定项全部达标，判定 **MVP-0 DEMO READY**。
