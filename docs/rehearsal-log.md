@@ -119,9 +119,12 @@ python3 tools/validate_demo_data.py          # 必须全绿
 
 结论：实时 Demo 任一步失败可直接切 Plan B 继续讲，**PASS**。
 
-## Plan C
+## Plan C（灾备录屏，非 blocker）
 
 - [ ] 完整录屏：未录制（需演示人按正式讲解节奏自行录屏；三轮 PASS 已证明流程可稳定复现）
+
+定位：**推荐的灾备手段，不是 MVP-0 DEMO READY 的判定条件。** 用途是现场
+网络 / MCP / 模型异常时的最终兜底；未录制不阻塞正式演示，可演后补录。
 
 ## 判定
 
